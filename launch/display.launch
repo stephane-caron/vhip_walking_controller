@@ -1,0 +1,16 @@
+<launch>
+  <!-- Robot model model -->
+  <!-- Call with `robot:=hrp4` for HRP-4 (default) -->
+  <!-- Call with `robot:=hrp2_drc` for HRP-2Kai -->
+  <arg name="robot" default="hrp4" />
+  <include file="$(find mc_scenario)/robot/$(arg robot).xml" />
+
+  <!-- RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find vhip_walking_controller)/etc/display.rviz"/>
+
+  <!-- Call with `bag:=true` to log a ROS bag -->
+  <arg name="bag" default="false" />
+  <group if="$(arg bag)">
+    <node name="bag" pkg="rosbag" type="record" args="-o vhip_walking_controller --all" />
+  </group>
+</launch>
