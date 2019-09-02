@@ -2,20 +2,20 @@
  *
  * \author Stéphane Caron
  *
- * This file is part of lipm_walking_controller.
+ * This file is part of vhip_walking_controller.
  *
- * lipm_walking_controller is free software: you can redistribute it and/or
+ * vhip_walking_controller is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
  *
- * lipm_walking_controller is distributed in the hope that it will be useful,
+ * vhip_walking_controller is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lipm_walking_controller. If not, see
+ * along with vhip_walking_controller. If not, see
  * <http://www.gnu.org/licenses/>.
  */
 
@@ -28,14 +28,14 @@
 #include <mc_rtc/logging.h>
 #include <mc_rbdyn/Robot.h>
 
-#include <lipm_walking/defs.h>
+#include <vhip_walking/defs.h>
 
 namespace Eigen
 {
   using HrepXd = std::pair<Eigen::MatrixXd, Eigen::VectorXd>;
 }
 
-namespace lipm_walking
+namespace vhip_walking
 {
   /** Contact state: set of feet in contact.
    *
@@ -379,11 +379,11 @@ namespace lipm_walking
 namespace mc_rtc
 {
   template<>
-  struct ConfigurationLoader<lipm_walking::Contact>
+  struct ConfigurationLoader<vhip_walking::Contact>
   {
-    static lipm_walking::Contact load(const mc_rtc::Configuration & config)
+    static vhip_walking::Contact load(const mc_rtc::Configuration & config)
     {
-      lipm_walking::Contact contact;
+      vhip_walking::Contact contact;
       contact.pose = config("pose");
       config("half_length", contact.halfLength);
       config("half_width", contact.halfWidth);
@@ -396,7 +396,7 @@ namespace mc_rtc
       return contact;
     }
 
-    static mc_rtc::Configuration save(const lipm_walking::Contact & contact)
+    static mc_rtc::Configuration save(const vhip_walking::Contact & contact)
     {
       mc_rtc::Configuration config;
       config.add("half_length", contact.halfLength);

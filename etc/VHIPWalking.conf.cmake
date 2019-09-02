@@ -79,7 +79,7 @@
       "ankle_torque": 100.0,
       "pressure": 1.0
     },
-    "lipm_tracking":
+    "vhip_tracking":
     {
       "dcm_gain": 5.0,
       "dcm_integral_gain": 20.0,
@@ -568,7 +568,7 @@
   "StepByStep": false,
 
   // Where to look for state libraries
-  "StatesLibraries": ["@MC_RTC_LIBDIR@/mc_controller/lipm_walking_controller/states"],
+  "StatesLibraries": ["@MC_RTC_LIBDIR@/mc_controller/vhip_walking_controller/states"],
 
   // Where to look for state files
   "StatesFiles": [],

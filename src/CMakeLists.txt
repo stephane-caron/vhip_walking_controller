@@ -1,19 +1,19 @@
 # Copyright 2018-2019 CNRS-UM LIRMM
 #
-# This file is part of lipm_walking_controller.
+# This file is part of vhip_walking_controller.
 #
-# lipm_walking_controller is free software: you can redistribute it and/or
+# vhip_walking_controller is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation, either version 3 of the License,
 # or (at your option) any later version.
 #
-# lipm_walking_controller is distributed in the hope that it will be useful,
+# vhip_walking_controller is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
 # General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with lipm_walking_controller. If not, see
+# along with vhip_walking_controller. If not, see
 # <http://www.gnu.org/licenses/>.
 
 set(CONTROLLER_SRC
@@ -28,25 +28,25 @@ set(CONTROLLER_SRC
 )
 
 set(CONTROLLER_HDR
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/Contact.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/Controller.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/FloatingBaseObserver.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/FootstepPlan.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/ModelPredictiveControl.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/NetWrenchObserver.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/Pendulum.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/Preview.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/Sole.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/Stabilizer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/State.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/SwingFoot.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/defs.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/utils/LeakyIntegrator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/utils/LowPassVelocityFilter.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/utils/clamp.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/utils/polynomials.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/utils/rotations.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/lipm_walking/utils/stats.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Contact.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Controller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/FloatingBaseObserver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/FootstepPlan.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/ModelPredictiveControl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/NetWrenchObserver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Pendulum.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Preview.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Sole.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Stabilizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/State.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/SwingFoot.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/defs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/utils/LeakyIntegrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/utils/LowPassVelocityFilter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/utils/clamp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/utils/polynomials.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/utils/rotations.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/utils/stats.h
 )
 
 set(FSM_CONTROLLER_LIB mc_control_fsm)
@@ -68,17 +68,17 @@ set_target_properties(${PROJECT_NAME}_controller
 target_link_libraries(${PROJECT_NAME}_controller ${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}_controller DESTINATION ${MC_RTC_LIBDIR}/mc_controller)
 
-set(CONF_OUT "$ENV{HOME}/.config/mc_rtc/controllers/LIPMWalking.conf")
+set(CONF_OUT "$ENV{HOME}/.config/mc_rtc/controllers/VHIPWalking.conf")
 set(AROBASE "@")
-set(LIPM_WALKING_STATES_DIR "${CATKIN_DEVEL_PREFIX}/lib/${PROJECT_NAME}/states/")
-set(LIPM_WALKING_STATES_DATA_DIR "${LIPM_WALKING_STATES_DIR}/data")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../etc/LIPMWalking.conf.cmake" "${CONF_OUT}")
+set(VHIP_WALKING_STATES_DIR "${CATKIN_DEVEL_PREFIX}/lib/${PROJECT_NAME}/states/")
+set(VHIP_WALKING_STATES_DATA_DIR "${vhip_walkING_STATES_DIR}/data")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../etc/VHIPWalking.conf.cmake" "${CONF_OUT}")
 unset(AROBASE)
 
-set(LIPM_WALKING_STATES_DIR "${MC_RTC_LIBDIR}/mc_controller/lipm_walking_controller/states")
-set(LIPM_WALKING_STATES_DATA_DIR "${LIPM_WALKING_STATES_DIR}/data")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../etc/LIPMWalking.conf.cmake" "${CMAKE_CURRENT_BINARY_DIR}/etc/LIPMWalking.conf")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/etc/LIPMWalking.conf"
+set(VHIP_WALKING_STATES_DIR "${MC_RTC_LIBDIR}/mc_controller/vhip_walking_controller/states")
+set(VHIP_WALKING_STATES_DATA_DIR "${vhip_walkING_STATES_DIR}/data")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../etc/VHIPWalking.conf.cmake" "${CMAKE_CURRENT_BINARY_DIR}/etc/VHIPWalking.conf")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/etc/VHIPWalking.conf"
     DESTINATION "${MC_RTC_LIBDIR}/mc_controller/etc/")
 
 add_subdirectory(states)

@@ -2,29 +2,29 @@
  *
  * \author Stéphane Caron
  *
- * This file is part of lipm_walking_controller.
+ * This file is part of vhip_walking_controller.
  *
- * lipm_walking_controller is free software: you can redistribute it and/or
+ * vhip_walking_controller is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
  *
- * lipm_walking_controller is distributed in the hope that it will be useful,
+ * vhip_walking_controller is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lipm_walking_controller. If not, see
+ * along with vhip_walking_controller. If not, see
  * <http://www.gnu.org/licenses/>.
  */
 
 #include <chrono>
 
-#include <lipm_walking/Stabilizer.h>
-#include <lipm_walking/utils/clamp.h>
+#include <vhip_walking/Stabilizer.h>
+#include <vhip_walking/utils/clamp.h>
 
-namespace lipm_walking
+namespace vhip_walking
 {
   namespace
   {
@@ -75,9 +75,9 @@ namespace lipm_walking
     logger.addLogEntry("stabilizer_fdqp_weights_netWrench", [this]() { return std::pow(fdqpWeights_.netWrenchSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_pressure", [this]() { return std::pow(fdqpWeights_.pressureSqrt, 2); });
     logger.addLogEntry("stabilizer_integrator_timeConstant", [this]() { return dcmIntegrator_.timeConstant(); });
-    logger.addLogEntry("stabilizer_lipm_tracking_dcm", [this]() { return dcmGain_; });
-    logger.addLogEntry("stabilizer_lipm_tracking_dcmIntegral", [this]() { return dcmIntegralGain_; });
-    logger.addLogEntry("stabilizer_lipm_tracking_zmp", [this]() { return zmpGain_; });
+    logger.addLogEntry("stabilizer_vhip_tracking_dcm", [this]() { return dcmGain_; });
+    logger.addLogEntry("stabilizer_vhip_tracking_dcmIntegral", [this]() { return dcmIntegralGain_; });
+    logger.addLogEntry("stabilizer_vhip_tracking_zmp", [this]() { return zmpGain_; });
     logger.addLogEntry("stabilizer_vdc_damping", [this]() { return vdcDamping_; });
     logger.addLogEntry("stabilizer_vdc_frequency", [this]() { return vdcFrequency_; });
     logger.addLogEntry("stabilizer_vdc_stiffness", [this]() { return vdcStiffness_; });
@@ -120,7 +120,7 @@ namespace lipm_walking
           dfzAdmittance_ = clamp(a(2), 0., MAX_DFZ_ADMITTANCE);
         }),
       ArrayInput(
-        "LIPM tracking",
+        "VHIP tracking",
         {"DCMp", "DCMi", "ZMP"},
         [this]() -> Eigen::Vector3d { return {dcmGain_, dcmIntegralGain_, zmpGain_}; },
         [this](const Eigen::Vector3d & gains)
@@ -229,13 +229,13 @@ namespace lipm_walking
       copAdmittance_ = admittance("cop");
       dfzAdmittance_ = admittance("dfz");
     }
-    if (config_.has("lipm_tracking"))
+    if (config_.has("vhip_tracking"))
     {
-      auto lipm = config_("lipm_tracking");
-      dcmGain_ = lipm("dcm_gain");
-      dcmIntegralGain_ = lipm("dcm_integral_gain");
-      dcmIntegrator_.timeConstant(lipm("dcm_integrator_time_constant"));
-      zmpGain_ = lipm("zmp_gain");
+      auto vhip = config_("vhip_tracking");
+      dcmGain_ = vhip("dcm_gain");
+      dcmIntegralGain_ = vhip("dcm_integral_gain");
+      dcmIntegrator_.timeConstant(vhip("dcm_integrator_time_constant"));
+      zmpGain_ = vhip("zmp_gain");
     }
     if (config_.has("tasks"))
     {

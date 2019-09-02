@@ -1,4 +1,4 @@
-# LIPM Walking Controller
+# VHIP Walking Controller
 
 [![Stair climbing by the HRP-4 humanoid robot](https://scaron.info/images/stair-climbing.jpg)](https://www.youtube.com/watch?v=vFCFKAunsYM)
 
@@ -30,7 +30,7 @@ The following dependencies are not publicly released yet but available upon requ
 
 ### Building from source on Linux
 
-Link `lipm_walking_controller` from the source folder of your catkin workspace, then follow the standard catkin workflow:
+Link `vhip_walking_controller` from the source folder of your catkin workspace, then follow the standard catkin workflow:
 ```sh
 catkin_make -DCMAKE_BUILD_TYPE=RelWithDebInfo && catkin_make install
 ```
@@ -40,13 +40,13 @@ To avoid a ``sudo`` at ``catkin_make install`` you can change ownership or permi
 
 First, launch RViz for the HRP-4 model by:
 ```sh
-roslaunch lipm_walking_controller display.launch robot:=hrp4
+roslaunch vhip_walking_controller display.launch robot:=hrp4
 ```
 Enable the controller in your mc\_rtc configuration:
 ```sh
 {
   "MainRobot": "HRP4",
-  "Enabled": ["LIPMWalking"]
+  "Enabled": ["VHIPWalking"]
 }
 ```
 Finally, run your mc\_rtc interface, for instance ``mc_vrep`` or ``MCUDPControl``.

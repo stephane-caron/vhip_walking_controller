@@ -2,20 +2,20 @@
  *
  * \author Stéphane Caron
  *
- * This file is part of lipm_walking_controller.
+ * This file is part of vhip_walking_controller.
  *
- * lipm_walking_controller is free software: you can redistribute it and/or
+ * vhip_walking_controller is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
  *
- * lipm_walking_controller is distributed in the hope that it will be useful,
+ * vhip_walking_controller is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with lipm_walking_controller. If not, see
+ * along with vhip_walking_controller. If not, see
  * <http://www.gnu.org/licenses/>.
  */
 
@@ -23,11 +23,11 @@
 
 #include <string>
 
-#include <lipm_walking/Contact.h>
-#include <lipm_walking/Sole.h>
-#include <lipm_walking/utils/clamp.h>
+#include <vhip_walking/Contact.h>
+#include <vhip_walking/Sole.h>
+#include <vhip_walking/utils/clamp.h>
 
-namespace lipm_walking
+namespace vhip_walking
 {
   /** Sequence of footsteps with gait parameters.
    *
@@ -410,16 +410,16 @@ namespace lipm_walking
 namespace mc_rtc
 {
   template<>
-  struct ConfigurationLoader<lipm_walking::FootstepPlan>
+  struct ConfigurationLoader<vhip_walking::FootstepPlan>
   {
-    static lipm_walking::FootstepPlan load(const mc_rtc::Configuration & config)
+    static vhip_walking::FootstepPlan load(const mc_rtc::Configuration & config)
     {
-      lipm_walking::FootstepPlan plan;
+      vhip_walking::FootstepPlan plan;
       plan.load(config);
       return plan;
     }
 
-    static mc_rtc::Configuration save(const lipm_walking::FootstepPlan & plan)
+    static mc_rtc::Configuration save(const vhip_walking::FootstepPlan & plan)
     {
       mc_rtc::Configuration config;
       plan.save(config);
