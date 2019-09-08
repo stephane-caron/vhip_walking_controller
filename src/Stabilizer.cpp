@@ -77,7 +77,6 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_integrator_timeConstant", [this]() { return dcmIntegrator_.timeConstant(); });
     logger.addLogEntry("stabilizer_vhip_tracking_dcm", [this]() { return dcmGain_; });
     logger.addLogEntry("stabilizer_vhip_tracking_dcmIntegral", [this]() { return dcmIntegralGain_; });
-    logger.addLogEntry("stabilizer_vhip_tracking_zmp", [this]() { return zmpGain_; });
     logger.addLogEntry("stabilizer_vdc_damping", [this]() { return vdcDamping_; });
     logger.addLogEntry("stabilizer_vdc_frequency", [this]() { return vdcFrequency_; });
     logger.addLogEntry("stabilizer_vdc_stiffness", [this]() { return vdcStiffness_; });
@@ -121,13 +120,12 @@ namespace vhip_walking
         }),
       ArrayInput(
         "VHIP tracking",
-        {"DCMp", "DCMi", "ZMP"},
-        [this]() -> Eigen::Vector3d { return {dcmGain_, dcmIntegralGain_, zmpGain_}; },
+        {"DCMp", "DCMi"},
+        [this]() -> Eigen::Vector3d { return {dcmGain_, dcmIntegralGain_}; },
         [this](const Eigen::Vector3d & gains)
         {
           dcmGain_ = clamp(gains(0), 0., MAX_DCM_P_GAIN);
           dcmIntegralGain_ = clamp(gains(1), 0., MAX_DCM_I_GAIN);
-          zmpGain_ = clamp(gains(2), 0., MAX_ZMP_GAIN);
         }),
       ArrayInput(
         "Vertical drift control",
@@ -210,7 +208,6 @@ namespace vhip_walking
     dfzAdmittance_ = 0.;
     vdcFrequency_ = 0.;
     vdcStiffness_ = 0.;
-    zmpGain_ = 0.;
   }
 
   void Stabilizer::configure(const mc_rtc::Configuration & config)
@@ -235,7 +232,6 @@ namespace vhip_walking
       dcmGain_ = vhip("dcm_gain");
       dcmIntegralGain_ = vhip("dcm_integral_gain");
       dcmIntegrator_.timeConstant(vhip("dcm_integrator_time_constant"));
-      zmpGain_ = vhip("zmp_gain");
     }
     if (config_.has("tasks"))
     {
@@ -321,7 +317,6 @@ namespace vhip_walking
     clampInPlace(dcmGain_, 0., MAX_DCM_P_GAIN, "DCM x-gain");
     clampInPlace(dcmIntegralGain_, 0., MAX_DCM_I_GAIN, "DCM integral x-gain");
     clampInPlace(dfzAdmittance_, 0., MAX_DFZ_ADMITTANCE, "DFz admittance");
-    clampInPlace(zmpGain_, 0., MAX_ZMP_GAIN, "ZMP x-gain");
   }
 
   void Stabilizer::addTasks(mc_solver::QPSolver & solver)
@@ -526,7 +521,6 @@ namespace vhip_walking
     desiredCoMAccel_ = pendulum_.comdd();
     desiredCoMAccel_ += dcmGain_ * dcmError_ + omega * comdError;
     desiredCoMAccel_ += dcmIntegralGain_ * dcmAverageError_;
-    desiredCoMAccel_ -= zmpGain_ * zmpError_;
     auto desiredForce = mass_ * (desiredCoMAccel_ - world::gravity);
     return {pendulum_.com().cross(desiredForce), desiredForce};
   }
