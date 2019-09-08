@@ -323,68 +323,25 @@ namespace vhip_walking
      */
     void setSupportFootGains();
 
-    /** Simplest CoM control law: no feedback.
+    /** Update CoM task with admittance control.
+     *
+     * Center of mass motions are added to the reference to compensate errors
+     * in the three components of the net contact wrench represented by the
+     * variable-height inverted pendulum: horizontal translations improve
+     * tracking of the ZMP, while vertical translations improve tracking of the
+     * normalized stiffness.
+     *
+     * ZMP compensation by horizontal motions is based on
+     * "体幹位置コンプライアンス制御によるモデル誤差吸収", Section 6.2.2 of Dr
+     * Nagasaka's PhD thesis (1999) available from:
+     * <https://sites.google.com/site/humanoidchannel/home/publication>. We
+     * follow the same approach but (1) use CoM damping control with an
+     * internal leaky integrator and (2) apply it to the distributed ZMP.
      *
      */
-    //void updateCoMOpenLoop();
+    void updateCoMAdmittanceControl();
 
-    /** Send desired net force after QP distribution.
-     *
-     * This approach is e.g. found in "Walking on Partial Footholds Including
-     * Line Contacts with the Humanoid Robot Atlas" (Wiedebach et al.,
-     * Humanoids 2016).
-     *
-     */
-    //void updateCoMDistribForce();
-
-    /** CoM compliance control.
-     *
-     * This approach is e.g. found in "Stabilization for the compliant humanoid
-     * robot COMAN exploiting intrinsic and controlled compliance" (Li et al.,
-     * ICRA 2012).
-     *
-     */
-    //void updateCoMComplianceControl();
-
-    /** CoM acceleration used for additional reaction force tracking.
-     *
-     * Same idea as ZMPCC but replacing the ZMP with the reaction force.
-     * Problem with looking at force rather than torque readings is that it
-     * yields steady-state ZMP error (standing upright, yes but not with the
-     * ZMP at the correct location).
-     *
-     */
-    //void updateCoMForceTracking();
-
-    /** ZMP Compensation Control.
-     *
-     * This implementation is based on
-     * "体幹位置コンプライアンス制御によるモデル誤差吸収" (Section 6.2.2 of
-     * Nagasaka's PhD thesis, 1999), available from
-     * <http://www.geocities.jp/kamono3/public.htm>.
-     *
-     */
-    //void updateCoMPosZMPCC();
-
-    /** ZMP Compensation Control applied after ZMP distribution.
-     *
-     * Same approach as Nagasaka's ZMPCC but (1) implemented as CoM
-     * acceleration reference sent to the inverse kinematics and (2) applied to
-     * the distributed ZMP.
-     *
-     */
-    //void updateCoMAccelZMPCC();
-
-    /** Update CoM task with ZMP Compensation Control.
-     *
-     * Same approach as Nagasaka's ZMPCC but (1) implemented as CoM damping
-     * control with an internal leaky integrator and (2) applied to the
-     * distributed ZMP.
-     *
-     */
-    void updateCoMZMPCC();
-
-    /** Apply foot pressure difference control.
+    /** Apply foot force difference control.
      *
      * This method is described in Section III.E of "Biped walking
      * stabilization based on linear inverted pendulum tracking" (Kajita et
@@ -417,8 +374,8 @@ namespace vhip_walking
     ContactState contactState_ = ContactState::DoubleSupport;
     Eigen::LSSOL_LS wrenchSolver_; /**< Least-squares solver for wrench distribution */
     Eigen::Matrix<double, 16, 6> wrenchFaceMatrix_;
-    Eigen::Vector2d comAdmittance_ = Eigen::Vector2d::Zero();
     Eigen::Vector2d copAdmittance_ = Eigen::Vector2d::Zero();
+    Eigen::Vector3d comAdmittance_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d comStiffness_ = {1000., 1000., 100.}; /**< Stiffness of CoM IK task */
     Eigen::Vector3d dcmAverageError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d dcmError_ = Eigen::Vector3d::Zero();

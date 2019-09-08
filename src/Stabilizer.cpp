@@ -141,12 +141,13 @@ namespace vhip_walking
         }),
       ArrayInput(
         "CoM admittance",
-        {"Ax", "Ay"},
+        {"Ax", "Ay", "Az"},
         [this]() { return comAdmittance_; },
-        [this](const Eigen::Vector2d & a)
+        [this](const Eigen::Vector3d & a)
         {
           comAdmittance_.x() = clamp(a.x(), 0., MAX_COM_ADMITTANCE);
           comAdmittance_.y() = clamp(a.y(), 0., MAX_COM_ADMITTANCE);
+          comAdmittance_.z() = clamp(a.z(), 0., MAX_COM_ADMITTANCE);
         }));
     gui->addElement(
       {"Stabilizer", "Integrators"},
@@ -314,6 +315,7 @@ namespace vhip_walking
   {
     clampInPlace(comAdmittance_.x(), 0., MAX_COM_ADMITTANCE, "CoM x-admittance");
     clampInPlace(comAdmittance_.y(), 0., MAX_COM_ADMITTANCE, "CoM y-admittance");
+    clampInPlace(comAdmittance_.z(), 0., MAX_COM_ADMITTANCE, "CoM z-admittance");
     clampInPlace(copAdmittance_.x(), 0., MAX_COP_ADMITTANCE, "CoP x-admittance");
     clampInPlace(copAdmittance_.y(), 0., MAX_COP_ADMITTANCE, "CoP y-admittance");
     clampInPlace(dcmGain_, 0., MAX_DCM_P_GAIN, "DCM x-gain");
@@ -482,14 +484,7 @@ namespace vhip_walking
         break;
     }
 
-    //updateCoMOpenLoop();
-    //updateCoMDistribForce();
-    //updateCoMComplianceControl();
-    //updateCoMForceTracking();
-    //updateCoMZMPCC();
-    //updateCoMAccelZMPCC();
-    updateCoMZMPCC();
-
+    updateCoMAdmittanceControl();
     updateFootForceDifferenceControl();
 
     auto endTime = high_resolution_clock::now();
@@ -688,67 +683,7 @@ namespace vhip_walking
     distribWrench_ = w_0;
   }
 
-  // void Stabilizer::updateCoMOpenLoop()
-  // {
-  //   comTask->com(pendulum_.com());
-  //   comTask->refVel(pendulum_.comd());
-  //   comTask->refAccel(pendulum_.comdd());
-  // }
-
-  // void Stabilizer::updateCoMDistribForce()
-  // {
-  //   comTask->setGains(0., 0.);
-  //   comTask->refAccel(distribWrench_.force() / mass_ + world::gravity);
-  // }
-
-  // void Stabilizer::updateCoMComplianceControl()
-  // {
-  //   auto F_error = (distribWrench_ - measuredWrench_).force();
-  //   Eigen::Vector3d comAdmittance = {comAdmittance_.x(), comAdmittance_.y(), 0.};
-  //   Eigen::Vector3d Delta_com = comAdmittance.cwiseProduct(F_error);
-  //   comTask->com(pendulum_.com() + Delta_com);
-  //   comTask->refVel(pendulum_.comd());
-  //   comTask->refAccel(pendulum_.comdd());
-  // }
-
-  // void Stabilizer::updateCoMForceTracking()
-  // {
-  //   auto forceError = (distribWrench_ - measuredWrench_).force();
-  //   Eigen::Vector3d comAdmittance = {comAdmittance_.x(), comAdmittance_.y(), 0.};
-  //   Eigen::Vector3d comddFT = comAdmittance.cwiseProduct(forceError);
-  //   comTask->com(pendulum_.com());
-  //   comTask->refVel(pendulum_.comd());
-  //   comTask->refAccel(pendulum_.comdd() + comddFT);
-  // }
-
-  // void Stabilizer::updateCoMPosZMPCC()
-  // {
-  //   auto refForce = mass_ * (pendulum_.comdd() - world::gravity);
-  //   sva::ForceVecd refWrench = {pendulum_.com().cross(refForce), refForce};
-  //   auto refZMP = computeZMP(refWrench);
-  //   auto zmpccError = refZMP - measuredZMP_;
-  //   constexpr double T = 0.1;
-  //   Eigen::Vector3d comAdmittance = {comAdmittance_.x(), comAdmittance_.y(), 0.};
-  //   auto offsetVel = -comAdmittance.cwiseProduct(zmpccError) - zmpccPosOffset / T;
-  //   zmpccPosOffset += offsetVel * dt_;
-  //   comTask->com(pendulum_.com() + zmpccPosOffset);
-  //   comTask->refVel(pendulum_.comd());
-  //   comTask->refAccel(pendulum_.comdd());
-  // }
-
-  // void Stabilizer::updateCoMAccelZMPCC()
-  // {
-  //   //auto zmpccError = pendulum_.zmp() - measuredZMP_; // nope
-  //   auto distribZMP = computeZMP(distribWrench_);
-  //   zmpccError_ = distribZMP - measuredZMP_; // yes!
-  //   Eigen::Vector3d comAdmittance = {comAdmittance_.x(), comAdmittance_.y(), 0.};
-  //   zmpccCoMAccel_ = -comAdmittance.cwiseProduct(zmpccError_);
-  //   comTask->com(pendulum_.com());
-  //   comTask->refVel(pendulum_.comd());
-  //   comTask->refAccel(pendulum_.comdd() + zmpccCoMAccel_);
-  // }
-
-  void Stabilizer::updateCoMZMPCC()
+  void Stabilizer::updateCoMAdmittanceControl()
   {
     if (zmpccOnlyDS_ && contactState_ != ContactState::DoubleSupport)
     {
@@ -762,8 +697,8 @@ namespace vhip_walking
       zmpccError_ = distribZMP - measuredZMP_;
       const Eigen::Matrix3d & R_0_c = zmpFrame_.rotation();
       const Eigen::Transpose<const Eigen::Matrix3d> R_c_0 = R_0_c.transpose();
-      Eigen::Vector3d comAdmittance = {comAdmittance_.x(), comAdmittance_.y(), 0.};
-      Eigen::Vector3d newVel = -R_c_0 * comAdmittance.cwiseProduct(R_0_c * zmpccError_);
+      Eigen::Vector3d comAdmittanceZMP = {comAdmittance_.x(), comAdmittance_.y(), 0.};
+      Eigen::Vector3d newVel = -R_c_0 * comAdmittanceZMP.cwiseProduct(R_0_c * zmpccError_);
       Eigen::Vector3d newAccel = (newVel - zmpccCoMVel_) / dt_;
       zmpccIntegrator_.add(newVel, dt_);
       zmpccCoMAccel_ = newAccel;
