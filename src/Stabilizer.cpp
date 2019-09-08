@@ -75,8 +75,8 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_fdqp_weights_netWrench", [this]() { return std::pow(fdqpWeights_.netWrenchSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_pressure", [this]() { return std::pow(fdqpWeights_.pressureSqrt, 2); });
     logger.addLogEntry("stabilizer_integrator_timeConstant", [this]() { return dcmIntegrator_.timeConstant(); });
-    logger.addLogEntry("stabilizer_vhip_tracking_dcm", [this]() { return dcmGain_; });
-    logger.addLogEntry("stabilizer_vhip_tracking_dcmIntegral", [this]() { return dcmIntegralGain_; });
+    logger.addLogEntry("stabilizer_dcm_feedback_gain", [this]() { return dcmGain_; });
+    logger.addLogEntry("stabilizer_dcm_feedback_integralGain", [this]() { return dcmIntegralGain_; });
     logger.addLogEntry("stabilizer_vdc_damping", [this]() { return vdcDamping_; });
     logger.addLogEntry("stabilizer_vdc_frequency", [this]() { return vdcFrequency_; });
     logger.addLogEntry("stabilizer_vdc_stiffness", [this]() { return vdcStiffness_; });
@@ -119,10 +119,10 @@ namespace vhip_walking
           dfzAdmittance_ = clamp(a(2), 0., MAX_DFZ_ADMITTANCE);
         }),
       ArrayInput(
-        "VHIP tracking",
-        {"DCMp", "DCMi"},
-        [this]() -> Eigen::Vector3d { return {dcmGain_, dcmIntegralGain_}; },
-        [this](const Eigen::Vector3d & gains)
+        "DCM feedback",
+        {"P", "I"},
+        [this]() -> Eigen::Vector2d { return {dcmGain_, dcmIntegralGain_}; },
+        [this](const Eigen::Vector2d & gains)
         {
           dcmGain_ = clamp(gains(0), 0., MAX_DCM_P_GAIN);
           dcmIntegralGain_ = clamp(gains(1), 0., MAX_DCM_I_GAIN);
@@ -226,12 +226,12 @@ namespace vhip_walking
       copAdmittance_ = admittance("cop");
       dfzAdmittance_ = admittance("dfz");
     }
-    if (config_.has("vhip_tracking"))
+    if (config_.has("dcm_feedback"))
     {
-      auto vhip = config_("vhip_tracking");
-      dcmGain_ = vhip("dcm_gain");
-      dcmIntegralGain_ = vhip("dcm_integral_gain");
-      dcmIntegrator_.timeConstant(vhip("dcm_integrator_time_constant"));
+      auto dcmConfig = config_("dcm_feedback");
+      dcmGain_ = dcmConfig("gain");
+      dcmIntegralGain_ = dcmConfig("integral_gain");
+      dcmIntegrator_.timeConstant(dcmConfig("integrator_time_constant"));
     }
     if (config_.has("tasks"))
     {
