@@ -21,6 +21,8 @@
 
 #include <chrono>
 
+#include <tvm/LinearizedControlProblem.h>
+
 #include <vhip_walking/Stabilizer.h>
 #include <vhip_walking/utils/clamp.h>
 

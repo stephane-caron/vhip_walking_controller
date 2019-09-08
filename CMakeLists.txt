@@ -43,6 +43,7 @@ add_compile_options(-DEIGEN_QLD_FOUND) # see https://github.com/vsamy/copra/issu
 add_compile_options(-DEIGEN_LSSOL_FOUND) # see https://github.com/vsamy/copra/issues/2
 add_required_dependency(eigen-lssol)
 add_required_dependency(mc_rtc)
+add_required_dependency(TVM)
 
 find_package(catkin REQUIRED COMPONENTS roscpp)
 
