@@ -68,7 +68,6 @@ namespace vhip_walking
     logger.addLogEntry("error_dcmAverage", [this]() { return dcmAverageError_; });
     logger.addLogEntry("error_dfz", [this]() { return logTargetDFz_ - logMeasuredDFz_; });
     logger.addLogEntry("error_sfz", [this]() { return logTargetSTz_ - logMeasuredSTz_; });
-    logger.addLogEntry("error_zmp", [this]() { return zmpError_; });
     logger.addLogEntry("perf_Stabilizer", [this]() { return runTime_; });
     logger.addLogEntry("stabilizer_admittance_com", [this]() { return comAdmittance_; });
     logger.addLogEntry("stabilizer_admittance_cop", [this]() { return copAdmittance_; });
@@ -192,9 +191,6 @@ namespace vhip_walking
       ArrayLabel("DCM avg. error [mm]",
         {"x", "y"},
         [this]() { return vecFromError(dcmAverageError_); }),
-      ArrayLabel("ZMP error [mm]",
-        {"x", "y"},
-        [this]() { return vecFromError(zmpError_); }),
       ArrayLabel("CoM offset [mm]",
         {"x", "y"},
         [this]() { return vecFromError(zmpccCoMOffset_); }),
@@ -304,7 +300,6 @@ namespace vhip_walking
     logMeasuredSTz_ = 0.;
     logTargetDFz_ = 0.;
     logTargetSTz_ = 0.;
-    zmpError_ = Eigen::Vector3d::Zero();
     zmpccCoMAccel_ = Eigen::Vector3d::Zero();
     zmpccCoMOffset_ = Eigen::Vector3d::Zero();
     zmpccCoMVel_ = Eigen::Vector3d::Zero();
@@ -505,9 +500,7 @@ namespace vhip_walking
     Eigen::Vector3d comError = pendulum_.com() - measuredCoM_;
     Eigen::Vector3d comdError = pendulum_.comd() - measuredCoMd_;
     dcmError_ = comdError + omega * comError;
-    zmpError_ = pendulum_.zmp() - measuredZMP_; // XXX: both in same plane?
     dcmError_.z() = 0.;
-    zmpError_.z() = 0.;
 
     if (!inTheAir_) // don't accumulate error if robot is in the air
     {

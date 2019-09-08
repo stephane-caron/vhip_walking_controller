@@ -252,14 +252,6 @@ namespace vhip_walking
       return computeZMP(distribWrench_);
     }
 
-    /** Difference between desired and measured ZMP.
-     *
-     */
-    const Eigen::Vector3d & zmpError()
-    {
-      return zmpError_;
-    }
-
   private:
     /** Weights for force distribution quadratic program (FDQP).
      *
@@ -383,7 +375,6 @@ namespace vhip_walking
     Eigen::Vector3d measuredCoM_;
     Eigen::Vector3d measuredCoMd_;
     Eigen::Vector3d measuredZMP_;
-    Eigen::Vector3d zmpError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMAccel_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMOffset_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMVel_ = Eigen::Vector3d::Zero();
