@@ -21,6 +21,7 @@ Compilation requires:
 * [Tasks](https://github.com/jrl-umi3218/Tasks/): inverse kinematics
 * [mc\_rbdyn\_urdf](https://github.com/jrl-umi3218/mc_rbdyn_urdf): robot model loader
 * [copra](https://github.com/vsamy/copra): linear model predictive control
+* [tvm](https://github.com/jrl-umi3218/tvm): modeling language for linear control problems
 
 The following dependencies are not publicly released yet but available upon request to [Pierre Gergondet](mailto:pierre.gergondet@gmail.com):
 
