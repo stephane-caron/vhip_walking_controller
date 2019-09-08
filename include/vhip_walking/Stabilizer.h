@@ -392,7 +392,8 @@ namespace vhip_walking
     FDQPWeights fdqpWeights_;
     LeakyIntegrator zmpccIntegrator_;
     bool inTheAir_ = false; /**< Is the robot in the air? */
-    bool zmpccOnlyDS_ = true;
+    bool lipmMode_ = false; /**< Perform LIPM rather than VHIP tracking? */
+    bool zmpccOnlyDS_ = true; /**< Apply ZMPCC only during double support phases? */
     const Pendulum & pendulum_; /**< Reference to desired reduced-model state */
     const mc_rbdyn::Robot & controlRobot_; /**< Control robot model (input to joint position controllers) */
     double comWeight_ = 1000.; /**< Weight of CoM IK task */
@@ -401,13 +402,13 @@ namespace vhip_walking
     double dcmIntegralGain_ = 5.; /**< Integral gain on DCM error */
     double dfzAdmittance_ = 1e-4; /**< Admittance for vertical foot force control */
     double dt_ = 0.005; /**< Controller cycle in [s] */
-    double leftFootRatio_ = 0.5;
+    double leftFootRatio_ = 0.5; /**< Desired ratio of total normal foot force applied to left foot */
     double logMeasuredDFz_ = 0.; /**< Measured vertical force difference between left and right foot */
     double logMeasuredSTz_ = 0.; /**< Model vertical position average between left and right foot */
     double logTargetDFz_ = 0.; /**< Desired vertical force difference between left and right foot */
     double logTargetSTz_ = 0.; /**< Desired vertical position average between left and right foot */
     double mass_ = 38.; /**< Robot mass in [kg] */
-    double runTime_ = 0.;
+    double runTime_ = 0.; /**< Measured average duration in [s] of a call to run() */
     double swingFootStiffness_ = 2000.; /**< Stiffness of swing foot IK task */
     double swingFootWeight_ = 500.; /**< Weight of swing foot IK task */
     double vdcDamping_ = 0.; /**< Vertical Drift Compensation damping */

@@ -122,7 +122,7 @@ namespace vhip_walking
         }),
       ArrayInput(
         "DCM feedback",
-        {"P", "I"},
+        {"proportional", "integral"},
         [this]() -> Eigen::Vector2d { return {dcmGain_, dcmIntegralGain_}; },
         [this](const Eigen::Vector2d & gains)
         {
