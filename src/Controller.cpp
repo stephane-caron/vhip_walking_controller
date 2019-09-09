@@ -115,6 +115,7 @@ namespace vhip_walking
 
     addLogEntries(logger());
     mpc_.addLogEntries(logger());
+    netWrenchObs_.addLogEntries(logger());
     stabilizer_.addLogEntries(logger());
 
     if (gui_)

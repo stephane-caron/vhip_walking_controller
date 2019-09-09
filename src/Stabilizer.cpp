@@ -105,6 +105,7 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_comOffset", [this]() { return comOffset_; });
     logger.addLogEntry("stabilizer_dcm_feedback_gain", [this]() { return dcmGain_; });
     logger.addLogEntry("stabilizer_dcm_feedback_integralGain", [this]() { return dcmIntegralGain_; });
+    logger.addLogEntry("stabilizer_distribWrench", [this]() { return distribWrench_; });
     logger.addLogEntry("stabilizer_fdqp_weights_ankleTorque", [this]() { return std::pow(fdqpWeights_.ankleTorqueSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_netWrench", [this]() { return std::pow(fdqpWeights_.netWrenchSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_pressure", [this]() { return std::pow(fdqpWeights_.pressureSqrt, 2); });

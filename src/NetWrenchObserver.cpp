@@ -62,4 +62,10 @@ namespace vhip_walking
       netZMP_ = contact.p() + contact.n().cross(moment_p) / contact.n().dot(force);
     }
   }
+
+  void NetWrenchObserver::addLogEntries(mc_rtc::Logger & logger)
+  {
+    logger.addLogEntry("netWrench_wrench", [this]() { return netWrench_; });
+    logger.addLogEntry("netWrench_zmp", [this]() { return netZMP_; });
+  }
 }

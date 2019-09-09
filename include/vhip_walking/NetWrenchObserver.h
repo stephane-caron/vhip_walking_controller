@@ -46,6 +46,13 @@ namespace vhip_walking
      */
     NetWrenchObserver(const std::vector<std::string> & sensorNames);
 
+    /** Log stabilizer entries.
+     *
+     * \param logger Logger.
+     *
+     */
+    void addLogEntries(mc_rtc::Logger & logger);
+
     /** Update estimates based on the sensed net contact wrench.
      *
      * \param contact Support contact frame.
