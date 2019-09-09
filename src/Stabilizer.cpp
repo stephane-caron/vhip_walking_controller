@@ -30,11 +30,12 @@ namespace vhip_walking
 {
   namespace
   {
-    inline Eigen::Vector2d vecFromError(const Eigen::Vector3d & error)
+    inline Eigen::Vector3d roundToMillimeter(const Eigen::Vector3d & error)
     {
       double x = -std::round(error.x() * 1000.);
       double y = -std::round(error.y() * 1000.);
-      return Eigen::Vector2d{x, y};
+      double z = -std::round(error.z() * 1000.);
+      return Eigen::Vector3d{x, y, z};
     }
   }
 
@@ -77,6 +78,7 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_altcc_comVel", [this]() { return altccCoMVel_; });
     logger.addLogEntry("stabilizer_altcc_error", [this]() { return altccError_; });
     logger.addLogEntry("stabilizer_altcc_leakRate", [this]() { return altccIntegrator_.rate(); });
+    logger.addLogEntry("stabilizer_comOffset", [this]() { return comOffset_; });
     logger.addLogEntry("stabilizer_dcm_feedback_gain", [this]() { return dcmGain_; });
     logger.addLogEntry("stabilizer_dcm_feedback_integralGain", [this]() { return dcmIntegralGain_; });
     logger.addLogEntry("stabilizer_fdqp_weights_ankleTorque", [this]() { return std::pow(fdqpWeights_.ankleTorqueSqrt, 2); });
@@ -198,14 +200,14 @@ namespace vhip_walking
           }
         }),
       ArrayLabel("DCM error [mm]",
-        {"x", "y"},
-        [this]() { return vecFromError(dcmError_); }),
+        {"x", "y", "z"},
+        [this]() { return roundToMillimeter(dcmError_); }),
       ArrayLabel("DCM avg. error [mm]",
-        {"x", "y"},
-        [this]() { return vecFromError(dcmAverageError_); }),
+        {"x", "y", "z"},
+        [this]() { return roundToMillimeter(dcmAverageError_); }),
       ArrayLabel("CoM offset [mm]",
         {"x", "y", "z"},
-        [this]() { return vecFromError(zmpccCoMOffset_ + altccCoMOffset_ * world::e_z); }),
+        [this]() { return roundToMillimeter(comOffset_); }),
       Label("Foot height diff [mm]",
         [this]() { return std::round(1000. * vfcZCtrl_); }));
   }
@@ -314,6 +316,7 @@ namespace vhip_walking
     altccCoMOffset_ = 0.;
     altccCoMVel_ = 0.;
     altccError_ = 0.;
+    comOffset_ = Eigen::Vector3d::Zero();
     dcmAverageError_ = Eigen::Vector3d::Zero();
     dcmError_ = Eigen::Vector3d::Zero();
     distribWrench_ = {pendulum_.com().cross(staticForce), staticForce};
@@ -743,9 +746,13 @@ namespace vhip_walking
   {
     updateCoMZMPCC();
     updateCoMAltitude();
-    comTask->com(pendulum_.com() + zmpccCoMOffset_ + altccCoMOffset_ * world::e_z);
-    comTask->refVel(pendulum_.comd() + zmpccCoMVel_ + altccCoMVel_ * world::e_z);
-    comTask->refAccel(pendulum_.comdd() + zmpccCoMAccel_ + altccCoMAccel_ * world::e_z);
+
+    comOffset_ = zmpccCoMOffset_ + altccCoMOffset_ * world::e_z;
+    auto comVelOffset = zmpccCoMVel_ + altccCoMVel_ * world::e_z;
+    auto comAccelOffset = zmpccCoMAccel_ + altccCoMAccel_ * world::e_z;
+    comTask->com(pendulum_.com() + comOffset_);
+    comTask->refVel(pendulum_.comd() + comVelOffset);
+    comTask->refAccel(pendulum_.comdd() + comAccelOffset);
   }
 
   void Stabilizer::updateFootForceDifferenceControl()
