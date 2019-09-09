@@ -35,6 +35,15 @@
 
 namespace vhip_walking
 {
+  /** Template model with which stabilizer feedback is computed.
+   *
+   */
+  enum class TemplateModel
+  {
+    LinearInvertedPendulum,
+    VariableHeightInvertedPendulum
+  };
+
   /** Walking stabilization based on linear inverted pendulum tracking.
    *
    * Stabilization bridges the gap between the open-loop behavior of the
@@ -55,7 +64,8 @@ namespace vhip_walking
     static constexpr double MAX_FDC_RZ_VEL = 0.2; // [rad] / [s]
 
     /* Maximum gains for HRP4LIRMM in standing static equilibrium. */
-    static constexpr double MAX_COM_ADMITTANCE = 20;
+    static constexpr double MAX_COM_XY_ADMITTANCE = 20.;
+    static constexpr double MAX_COM_Z_ADMITTANCE = 0.1;
     static constexpr double MAX_COP_ADMITTANCE = 0.1;
     static constexpr double MAX_DCM_I_GAIN = 30.;
     static constexpr double MAX_DCM_P_GAIN = 10.;
@@ -401,12 +411,12 @@ namespace vhip_walking
     Eigen::Vector3d zmpccError_ = Eigen::Vector3d::Zero();
     ExponentialMovingAverage dcmIntegrator_;
     FDQPWeights fdqpWeights_;
-    LeakyIntegrator<double> altccIntegrator_;
     LeakyIntegrator<Eigen::Vector3d> zmpccIntegrator_;
+    LeakyIntegrator<double> altccIntegrator_;
+    TemplateModel model_ = TemplateModel::VariableHeightInvertedPendulum;
     bool inTheAir_ = false; /**< Is the robot in the air? */
-    bool lipmMode_ = false; /**< Perform LIPM rather than VHIP tracking? */
     bool zmpccOnlyDS_ = true; /**< Apply ZMPCC only during double support phases? */
-    const Pendulum & pendulum_; /**< Reference to desired reduced-model state */
+    const Pendulum & pendulum_; /**< Reference to desired template model state */
     const mc_rbdyn::Robot & controlRobot_; /**< Control robot model (input to joint position controllers) */
     double altccCoMAccel_ = 0.;
     double altccCoMOffset_ = 0.;

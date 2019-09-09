@@ -37,6 +37,30 @@ namespace vhip_walking
       double z = -std::round(error.z() * 1000.);
       return Eigen::Vector3d{x, y, z};
     }
+
+    static const std::string TEMPLATE_MODEL_LABELS[2] =
+    {
+      "Linear inverted pendulum",
+      "Variable height inverted pendulum"
+    };
+
+    inline const std::string & templateModelToString(TemplateModel & templateModel)
+    {
+      unsigned i = (templateModel == TemplateModel::LinearInvertedPendulum) ? 0 : 1;
+      return TEMPLATE_MODEL_LABELS[i];
+    }
+
+    inline TemplateModel templateModelFromString(const std::string & str)
+    {
+      if (str == TEMPLATE_MODEL_LABELS[0])
+      {
+        return TemplateModel::LinearInvertedPendulum;
+      }
+      else
+      {
+        return TemplateModel::VariableHeightInvertedPendulum;
+      }
+    }
   }
 
   Stabilizer::Stabilizer(const mc_rbdyn::Robot & controlRobot, const Pendulum & pendulum, double dt)
@@ -113,6 +137,11 @@ namespace vhip_walking
       Button(
         "Reconfigure",
         [this]() { reconfigure(); }),
+      ComboInput(
+        "Template model",
+        {TEMPLATE_MODEL_LABELS[0], TEMPLATE_MODEL_LABELS[1]},
+        [this]() { return templateModelToString(model_); },
+        [this](const std::string & model) { model_ = templateModelFromString(model); }),
       ArrayInput(
         "Foot admittance",
         {"CoPx", "CoPy", "DFz"},
@@ -151,9 +180,9 @@ namespace vhip_walking
         [this]() { return comAdmittance_; },
         [this](const Eigen::Vector3d & a)
         {
-          comAdmittance_.x() = clamp(a.x(), 0., MAX_COM_ADMITTANCE);
-          comAdmittance_.y() = clamp(a.y(), 0., MAX_COM_ADMITTANCE);
-          comAdmittance_.z() = clamp(a.z(), 0., MAX_COM_ADMITTANCE);
+          comAdmittance_.x() = clamp(a.x(), 0., MAX_COM_XY_ADMITTANCE);
+          comAdmittance_.y() = clamp(a.y(), 0., MAX_COM_XY_ADMITTANCE);
+          comAdmittance_.z() = clamp(a.z(), 0., MAX_COM_Z_ADMITTANCE);
         }));
     gui->addElement(
       {"Stabilizer", "Integrators"},
@@ -332,9 +361,9 @@ namespace vhip_walking
 
   void Stabilizer::checkGains()
   {
-    clampInPlace(comAdmittance_.x(), 0., MAX_COM_ADMITTANCE, "CoM x-admittance");
-    clampInPlace(comAdmittance_.y(), 0., MAX_COM_ADMITTANCE, "CoM y-admittance");
-    clampInPlace(comAdmittance_.z(), 0., MAX_COM_ADMITTANCE, "CoM z-admittance");
+    clampInPlace(comAdmittance_.x(), 0., MAX_COM_XY_ADMITTANCE, "CoM x-admittance");
+    clampInPlace(comAdmittance_.y(), 0., MAX_COM_XY_ADMITTANCE, "CoM y-admittance");
+    clampInPlace(comAdmittance_.z(), 0., MAX_COM_Z_ADMITTANCE, "CoM z-admittance");
     clampInPlace(copAdmittance_.x(), 0., MAX_COP_ADMITTANCE, "CoP x-admittance");
     clampInPlace(copAdmittance_.y(), 0., MAX_COP_ADMITTANCE, "CoP y-admittance");
     clampInPlace(dcmGain_, 0., MAX_DCM_P_GAIN, "DCM x-gain");
@@ -704,9 +733,9 @@ namespace vhip_walking
   {
     if (zmpccOnlyDS_ && contactState_ != ContactState::DoubleSupport)
     {
+      zmpccIntegrator_.add(Eigen::Vector3d::Zero(), dt_); // leak to zero
       zmpccCoMAccel_.setZero();
       zmpccCoMVel_.setZero();
-      zmpccIntegrator_.add(Eigen::Vector3d::Zero(), dt_); // leak to zero
     }
     else
     {
@@ -726,20 +755,26 @@ namespace vhip_walking
 
   void Stabilizer::updateCoMAltitude()
   {
-    Eigen::Vector3d comTarget = comTask->com();
-    double height = comTarget.z() - zmpFrame_.translation().z();
-    double distribLambda = distribWrench_.force().z() / (mass_ * height);
-    double measuredLambda = measuredWrench_.force().z() / (mass_ * height);
+    if (model_ == TemplateModel::LinearInvertedPendulum)
+    {
+      altccIntegrator_.add(0., dt_);
+      altccCoMAccel_ = 0.;
+      altccCoMVel_ = 0.;
+    }
+    else
+    {
+      Eigen::Vector3d comTarget = comTask->com();
+      double height = comTarget.z() - zmpFrame_.translation().z();
+      double distribLambda = distribWrench_.force().z() / (mass_ * height);
+      double measuredLambda = measuredWrench_.force().z() / (mass_ * height);
 
-    double newVel = comAdmittance_.z() * (measuredLambda - distribLambda);
-    double newAccel = (newVel - altccCoMVel_) / dt_;
-    altccIntegrator_.add(newVel, dt_);
-
-    // ...
-
-    altccCoMAccel_ = 0.;
-    altccCoMOffset_ = 0.;
-    altccCoMVel_ = 0.;
+      double newVel = comAdmittance_.z() * (measuredLambda - distribLambda);
+      double newAccel = (newVel - altccCoMVel_) / dt_;
+      altccIntegrator_.add(newVel, dt_);
+      altccCoMAccel_ = newAccel;
+      altccCoMVel_ = newVel;
+    }
+    altccCoMOffset_ = altccIntegrator_.eval();
   }
 
   void Stabilizer::updateCoMAdmittanceControl()
