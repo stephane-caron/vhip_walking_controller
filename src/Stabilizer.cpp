@@ -159,7 +159,7 @@ namespace vhip_walking
         [this]() -> Eigen::Vector2d { return {dcmGain_, dcmIntegralGain_}; },
         [this](const Eigen::Vector2d & gains)
         {
-          dcmGain_ = clamp(gains(0), 0., MAX_DCM_P_GAIN);
+          dcmGain_ = clamp(gains(0), MIN_DCM_P_GAIN, MAX_DCM_P_GAIN);
           dcmIntegralGain_ = clamp(gains(1), 0., MAX_DCM_I_GAIN);
         }),
       ArrayInput(
@@ -374,7 +374,7 @@ namespace vhip_walking
     clampInPlace(comAdmittance_.z(), 0., MAX_COM_Z_ADMITTANCE, "CoM z-admittance");
     clampInPlace(copAdmittance_.x(), 0., MAX_COP_ADMITTANCE, "CoP x-admittance");
     clampInPlace(copAdmittance_.y(), 0., MAX_COP_ADMITTANCE, "CoP y-admittance");
-    clampInPlace(dcmGain_, 0., MAX_DCM_P_GAIN, "DCM x-gain");
+    clampInPlace(dcmGain_, MIN_DCM_P_GAIN, MAX_DCM_P_GAIN, "DCM x-gain");
     clampInPlace(dcmIntegralGain_, 0., MAX_DCM_I_GAIN, "DCM integral x-gain");
     clampInPlace(dfzAdmittance_, 0., MAX_DFZ_ADMITTANCE, "DFz admittance");
   }
@@ -447,7 +447,7 @@ namespace vhip_walking
     }
   }
 
-  void Stabilizer::setSupportFootGains()
+  void Stabilizer::updateSupportFootGains()
   {
     sva::MotionVecd vdcContactStiffness = {
       contactStiffness_.angular(),
@@ -520,7 +520,7 @@ namespace vhip_walking
 
     checkGains();
     checkInTheAir();
-    setSupportFootGains();
+    updateSupportFootGains();
     updateZMPFrame();
 
     auto desiredWrench = computeDesiredWrench();
@@ -558,6 +558,7 @@ namespace vhip_walking
   sva::ForceVecd Stabilizer::computeDesiredWrench()
   {
     double omega = pendulum_.omega();
+    double omega2 = omega * omega;
     Eigen::Vector3d comError = pendulum_.com() - measuredCoM_;
     Eigen::Vector3d comdError = pendulum_.comd() - measuredCoMd_;
     dcmError_ = comError + comdError / omega;
@@ -570,8 +571,8 @@ namespace vhip_walking
     }
 
     desiredCoMAccel_ = pendulum_.comdd();
-    desiredCoMAccel_ += dcmGain_ * dcmError_ + omega * comdError;
-    desiredCoMAccel_ += dcmIntegralGain_ * dcmAverageError_;
+    desiredCoMAccel_ += dcmGain_ * omega2 * dcmError_ + omega * comdError;
+    desiredCoMAccel_ += dcmIntegralGain_ * omega2 * dcmAverageError_;
     auto desiredForce = mass_ * (desiredCoMAccel_ - world::gravity);
     return {pendulum_.com().cross(desiredForce), desiredForce};
   }

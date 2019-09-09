@@ -67,8 +67,9 @@ namespace vhip_walking
     static constexpr double MAX_COM_XY_ADMITTANCE = 20.;
     static constexpr double MAX_COM_Z_ADMITTANCE = 0.1;
     static constexpr double MAX_COP_ADMITTANCE = 0.1;
-    static constexpr double MAX_DCM_I_GAIN = 100.;
-    static constexpr double MAX_DCM_P_GAIN = 35.;
+    static constexpr double MAX_DCM_I_GAIN = 8.;
+    static constexpr double MAX_DCM_P_GAIN = 3.;
+    static constexpr double MIN_DCM_P_GAIN = 1.;
     static constexpr double MAX_DFZ_ADMITTANCE = 5e-4;
     static constexpr double MAX_ZMP_GAIN = 20.;
 
@@ -323,8 +324,10 @@ namespace vhip_walking
 
     /** Reset admittance, damping and stiffness for every foot in contact.
      *
+     * \note This function is called at every run().
+     *
      */
-    void setSupportFootGains();
+    void updateSupportFootGains();
 
     /** Update CoM task based on horizontal and vertical admittance control.
      *
@@ -424,8 +427,8 @@ namespace vhip_walking
     double altccError_ = 0.;
     double comWeight_ = 1000.; /**< Weight of CoM IK task */
     double contactWeight_ = 100000.; /**< Weight of contact IK tasks */
-    double dcmGain_ = 1.; /**< Proportional gain on DCM error */
-    double dcmIntegralGain_ = 5.; /**< Integral gain on DCM error */
+    double dcmGain_ = 1.25; /**< Proportional gain \f$k > 1\f$ such that \f$\Delta r = k \Delta \xi \Leftrightarrow \Delta\xi = \omega (1 - k) \Delta \xi\f$ */
+    double dcmIntegralGain_ = 2.5; /**< Integral gain on DCM error */
     double dfzAdmittance_ = 1e-4; /**< Admittance for vertical foot force control */
     double distribLambda_ = 0.; /**< Normalized stiffness required by FDQP */
     double dt_ = 0.005; /**< Controller cycle in [s] */
