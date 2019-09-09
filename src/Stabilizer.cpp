@@ -72,15 +72,17 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_admittance_com", [this]() { return comAdmittance_; });
     logger.addLogEntry("stabilizer_admittance_cop", [this]() { return copAdmittance_; });
     logger.addLogEntry("stabilizer_admittance_dfz", [this]() { return dfzAdmittance_; });
+    logger.addLogEntry("stabilizer_altcc_comAccel", [this]() { return altccCoMAccel_; });
+    logger.addLogEntry("stabilizer_altcc_comOffset", [this]() { return altccCoMOffset_; });
+    logger.addLogEntry("stabilizer_altcc_comVel", [this]() { return altccCoMVel_; });
+    logger.addLogEntry("stabilizer_altcc_error", [this]() { return altccError_; });
+    logger.addLogEntry("stabilizer_altcc_leakRate", [this]() { return altccIntegrator_.rate(); });
     logger.addLogEntry("stabilizer_dcm_feedback_gain", [this]() { return dcmGain_; });
     logger.addLogEntry("stabilizer_dcm_feedback_integralGain", [this]() { return dcmIntegralGain_; });
     logger.addLogEntry("stabilizer_fdqp_weights_ankleTorque", [this]() { return std::pow(fdqpWeights_.ankleTorqueSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_netWrench", [this]() { return std::pow(fdqpWeights_.netWrenchSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_pressure", [this]() { return std::pow(fdqpWeights_.pressureSqrt, 2); });
     logger.addLogEntry("stabilizer_integrator_timeConstant", [this]() { return dcmIntegrator_.timeConstant(); });
-    logger.addLogEntry("stabilizer_altcc_comAccel", [this]() { return altccCoMAccel_; });
-    logger.addLogEntry("stabilizer_altcc_comOffset", [this]() { return altccCoMOffset_; });
-    logger.addLogEntry("stabilizer_altcc_comVel", [this]() { return altccCoMVel_; });
     logger.addLogEntry("stabilizer_vdc_damping", [this]() { return vdcDamping_; });
     logger.addLogEntry("stabilizer_vdc_frequency", [this]() { return vdcFrequency_; });
     logger.addLogEntry("stabilizer_vdc_stiffness", [this]() { return vdcStiffness_; });
@@ -159,6 +161,9 @@ namespace vhip_walking
       Button(
         "Reset ZMPCC integrator",
         [this]() { zmpccIntegrator_.setZero(); }),
+      Button(
+        "Reset altitude integrator",
+        [this]() { altccIntegrator_.setZero(); }),
       NumberInput(
         "DCM integrator T",
         [this]() { return dcmIntegrator_.timeConstant(); },
@@ -167,6 +172,10 @@ namespace vhip_walking
         "Use ZMPCC only in double support?",
         [this]() { return zmpccOnlyDS_; },
         [this]() { zmpccOnlyDS_ = !zmpccOnlyDS_; }),
+      NumberInput(
+        "Altitude CC leak rate [Hz]",
+        [this]() { return altccIntegrator_.rate(); },
+        [this](double T) { altccIntegrator_.rate(T); }),
       NumberInput(
         "ZMPCC leak rate [Hz]",
         [this]() { return zmpccIntegrator_.rate(); },
@@ -195,8 +204,8 @@ namespace vhip_walking
         {"x", "y"},
         [this]() { return vecFromError(dcmAverageError_); }),
       ArrayLabel("CoM offset [mm]",
-        {"x", "y"},
-        [this]() { return vecFromError(zmpccCoMOffset_); }),
+        {"x", "y", "z"},
+        [this]() { return vecFromError(zmpccCoMOffset_ + altccCoMOffset_ * world::e_z); }),
       Label("Foot height diff [mm]",
         [this]() { return std::round(1000. * vfcZCtrl_); }));
   }
@@ -266,10 +275,13 @@ namespace vhip_walking
       vdcFrequency_ = vdc("frequency");
       vdcStiffness_ = vdc("stiffness");
     }
+    if (config_.has("altcc"))
+    {
+      altccIntegrator_.rate(config_("altcc")("integrator_leak_rate"));
+    }
     if (config_.has("zmpcc"))
     {
-      auto zmpcc = config_("zmpcc");
-      zmpccIntegrator_.rate(zmpcc("integrator_leak_rate"));
+      zmpccIntegrator_.rate(config_("zmpcc")("integrator_leak_rate"));
     }
   }
 
@@ -291,17 +303,20 @@ namespace vhip_walking
 
     dcmIntegrator_.setZero();
     dcmIntegrator_.saturation(MAX_AVERAGE_DCM_ERROR);
+    altccIntegrator_.setZero();
+    altccIntegrator_.saturation(MAX_ALTCC_COM_OFFSET);
     zmpccIntegrator_.setZero();
     zmpccIntegrator_.saturation(MAX_ZMPCC_COM_OFFSET);
 
     Eigen::Vector3d staticForce = -mass_ * world::gravity;
 
+    altccCoMAccel_ = 0.;
+    altccCoMOffset_ = 0.;
+    altccCoMVel_ = 0.;
+    altccError_ = 0.;
     dcmAverageError_ = Eigen::Vector3d::Zero();
     dcmError_ = Eigen::Vector3d::Zero();
     distribWrench_ = {pendulum_.com().cross(staticForce), staticForce};
-    altccCoMAccel_ = Eigen::Vector3d::Zero();
-    altccCoMOffset_ = Eigen::Vector3d::Zero();
-    altccCoMVel_ = Eigen::Vector3d::Zero();
     logMeasuredDFz_ = 0.;
     logMeasuredSTz_ = 0.;
     logTargetDFz_ = 0.;
@@ -708,18 +723,29 @@ namespace vhip_walking
 
   void Stabilizer::updateCoMAltitude()
   {
-    altccCoMAccel_ = Eigen::Vector3d::Zero();
-    altccCoMOffset_ = Eigen::Vector3d::Zero();
-    altccCoMVel_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d comTarget = comTask->com();
+    double height = comTarget.z() - zmpFrame_.translation().z();
+    double distribLambda = distribWrench_.force().z() / (mass_ * height);
+    double measuredLambda = measuredWrench_.force().z() / (mass_ * height);
+
+    double newVel = comAdmittance_.z() * (measuredLambda - distribLambda);
+    double newAccel = (newVel - altccCoMVel_) / dt_;
+    altccIntegrator_.add(newVel, dt_);
+
+    // ...
+
+    altccCoMAccel_ = 0.;
+    altccCoMOffset_ = 0.;
+    altccCoMVel_ = 0.;
   }
 
   void Stabilizer::updateCoMAdmittanceControl()
   {
     updateCoMZMPCC();
     updateCoMAltitude();
-    comTask->com(pendulum_.com() + zmpccCoMOffset_ + altccCoMOffset_);
-    comTask->refVel(pendulum_.comd() + zmpccCoMVel_ + altccCoMVel_);
-    comTask->refAccel(pendulum_.comdd() + zmpccCoMAccel_ + altccCoMAccel_);
+    comTask->com(pendulum_.com() + zmpccCoMOffset_ + altccCoMOffset_ * world::e_z);
+    comTask->refVel(pendulum_.comd() + zmpccCoMVel_ + altccCoMVel_ * world::e_z);
+    comTask->refAccel(pendulum_.comdd() + zmpccCoMAccel_ + altccCoMAccel_ * world::e_z);
   }
 
   void Stabilizer::updateFootForceDifferenceControl()

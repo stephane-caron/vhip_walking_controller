@@ -32,7 +32,8 @@
  * signal itself). See <https://en.wikipedia.org/wiki/Leaky_integrator>.
  *
  */
-struct LeakyIntegrator
+template <typename T>
+struct LeakyIntegratorBase
 {
   /** Add constant input for a fixed duration.
    *
@@ -41,7 +42,7 @@ struct LeakyIntegrator
    * \param dt Fixed duration.
    *
    */
-  inline void add(const Eigen::Vector3d & value, double dt)
+  void add(const T & value, double dt)
   {
     integral_ = (1. - rate_ * dt) * integral_ + dt * value;
     if (saturation_ > 0.)
@@ -53,7 +54,7 @@ struct LeakyIntegrator
   /** Evaluate the output of the integrator.
    *
    */
-  inline const Eigen::Vector3d & eval() const
+  const T & eval() const
   {
     return integral_;
   }
@@ -61,7 +62,7 @@ struct LeakyIntegrator
   /** Get leak rate.
    *
    */
-  inline double rate() const
+  double rate() const
   {
     return rate_;
   }
@@ -71,7 +72,7 @@ struct LeakyIntegrator
    * \param rate New leak rate.
    *
    */
-  inline void rate(double rate)
+  void rate(double rate)
   {
     rate_ = rate;
   }
@@ -81,37 +82,92 @@ struct LeakyIntegrator
    * \param s Output will saturate between -s and +s.
    *
    */
-  inline void saturation(double s)
+  void saturation(double s)
   {
     saturation_ = s;
+  }
+
+protected:
+  /** Saturate output.
+   *
+   */
+  virtual void saturate() = 0;
+
+protected:
+  T integral_;
+  double rate_ = 0.1;
+  double saturation_ = -1.;
+};
+
+template <typename T>
+struct LeakyIntegrator : LeakyIntegratorBase<T>
+{
+  /** Empty constructor.
+   *
+   */
+  LeakyIntegrator()
+  {
+    this->integral_.setZero();
+  }
+
+  /** Saturate output.
+   *
+   */
+  virtual void saturate() override
+  {
+    for (unsigned i = 0; i < 3; i++)
+    {
+      if (this->integral_(i) < -this->saturation_)
+      {
+        this->integral_(i) = -this->saturation_;
+      }
+      else if (this->integral_(i) > this->saturation_)
+      {
+        this->integral_(i) = this->saturation_;
+      }
+    }
   }
 
   /** Reset integral to zero.
    *
    */
-  inline void setZero()
+  void setZero()
   {
-    integral_.setZero();
+    this->integral_.setZero();
+  }
+};
+
+template <>
+struct LeakyIntegrator<double> : LeakyIntegratorBase<double>
+{
+  /** Empty constructor.
+   *
+   */
+  LeakyIntegrator()
+  {
+    this->integral_ = 0.;
   }
 
-private:
-  inline void saturate()
+  /** Saturate output.
+   *
+   */
+  virtual void saturate() override
   {
-    for (unsigned i = 0; i < 3; i++)
+    if (this->integral_ < -this->saturation_)
     {
-      if (integral_(i) < -saturation_)
-      {
-        integral_(i) = -saturation_;
-      }
-      else if (integral_(i) > saturation_)
-      {
-        integral_(i) = saturation_;
-      }
+      this->integral_ = -this->saturation_;
+    }
+    else if (this->integral_ > this->saturation_)
+    {
+      this->integral_ = this->saturation_;
     }
   }
 
-private:
-  Eigen::Vector3d integral_ = Eigen::Vector3d::Zero();
-  double rate_ = 0.1;
-  double saturation_ = -1.;
+  /** Reset integral to zero.
+   *
+   */
+  void setZero()
+  {
+    this->integral_ = 0.;
+  }
 };

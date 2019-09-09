@@ -67,6 +67,7 @@ namespace vhip_walking
 
     /* Saturate integrator in case of windup */
     static constexpr double MAX_AVERAGE_DCM_ERROR = 0.05; // [m]
+    static constexpr double MAX_ALTCC_COM_OFFSET = 0.10; // [m]
     static constexpr double MAX_ZMPCC_COM_OFFSET = 0.05; // [m]
 
     /** Initialize stabilizer.
@@ -390,9 +391,6 @@ namespace vhip_walking
     Eigen::Vector3d dcmAverageError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d dcmError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d desiredCoMAccel_;
-    Eigen::Vector3d altccCoMAccel_ = Eigen::Vector3d::Zero();
-    Eigen::Vector3d altccCoMOffset_ = Eigen::Vector3d::Zero();
-    Eigen::Vector3d altccCoMVel_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d measuredCoM_;
     Eigen::Vector3d measuredCoMd_;
     Eigen::Vector3d measuredZMP_;
@@ -402,13 +400,17 @@ namespace vhip_walking
     Eigen::Vector3d zmpccError_ = Eigen::Vector3d::Zero();
     ExponentialMovingAverage dcmIntegrator_;
     FDQPWeights fdqpWeights_;
-    LeakyIntegrator altccIntegrator_;
-    LeakyIntegrator zmpccIntegrator_;
+    LeakyIntegrator<double> altccIntegrator_;
+    LeakyIntegrator<Eigen::Vector3d> zmpccIntegrator_;
     bool inTheAir_ = false; /**< Is the robot in the air? */
     bool lipmMode_ = false; /**< Perform LIPM rather than VHIP tracking? */
     bool zmpccOnlyDS_ = true; /**< Apply ZMPCC only during double support phases? */
     const Pendulum & pendulum_; /**< Reference to desired reduced-model state */
     const mc_rbdyn::Robot & controlRobot_; /**< Control robot model (input to joint position controllers) */
+    double altccCoMAccel_ = 0.;
+    double altccCoMOffset_ = 0.;
+    double altccCoMVel_ = 0.;
+    double altccError_ = 0.;
     double comWeight_ = 1000.; /**< Weight of CoM IK task */
     double contactWeight_ = 100000.; /**< Weight of contact IK tasks */
     double dcmGain_ = 1.; /**< Proportional gain on DCM error */
