@@ -19,8 +19,8 @@
     },
     "dcm_feedback":
     {
-      "gain": 5.0,
-      "integral_gain": 10.0,
+      "gain": 15.0,
+      "integral_gain": 35.0,
       "integrator_time_constant": 20.0
     },
     "tasks":

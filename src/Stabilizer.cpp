@@ -560,7 +560,7 @@ namespace vhip_walking
     double omega = pendulum_.omega();
     Eigen::Vector3d comError = pendulum_.com() - measuredCoM_;
     Eigen::Vector3d comdError = pendulum_.comd() - measuredCoMd_;
-    dcmError_ = comdError + omega * comError;
+    dcmError_ = comError + comdError / omega;
     dcmError_.z() = 0.;
 
     if (!inTheAir_) // don't accumulate error if robot is in the air

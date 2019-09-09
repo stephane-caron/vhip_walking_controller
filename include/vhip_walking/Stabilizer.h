@@ -67,8 +67,8 @@ namespace vhip_walking
     static constexpr double MAX_COM_XY_ADMITTANCE = 20.;
     static constexpr double MAX_COM_Z_ADMITTANCE = 0.1;
     static constexpr double MAX_COP_ADMITTANCE = 0.1;
-    static constexpr double MAX_DCM_I_GAIN = 30.;
-    static constexpr double MAX_DCM_P_GAIN = 10.;
+    static constexpr double MAX_DCM_I_GAIN = 100.;
+    static constexpr double MAX_DCM_P_GAIN = 35.;
     static constexpr double MAX_DFZ_ADMITTANCE = 5e-4;
     static constexpr double MAX_ZMP_GAIN = 20.;
 
