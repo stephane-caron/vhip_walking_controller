@@ -315,23 +315,41 @@ namespace vhip_walking
      */
     void setSupportFootGains();
 
-    /** Update CoM task with admittance control.
+    /** Update CoM task based on horizontal and vertical admittance control.
      *
      * Center of mass motions are added to the reference to compensate errors
-     * in the three components of the net contact wrench represented by the
-     * variable-height inverted pendulum: horizontal translations improve
-     * tracking of the ZMP, while vertical translations improve tracking of the
-     * normalized stiffness.
-     *
-     * ZMP compensation by horizontal motions is based on
-     * "体幹位置コンプライアンス制御によるモデル誤差吸収", Section 6.2.2 of Dr
-     * Nagasaka's PhD thesis (1999) available from:
-     * <https://sites.google.com/site/humanoidchannel/home/publication>. We
-     * follow the same approach but (1) use CoM damping control with an
-     * internal leaky integrator and (2) apply it to the distributed ZMP.
+     * in the three components of the net contact wrench that the VHIP
+     * represents (ZMP \f$r\f$ and normalized stiffness \f$\lambda\f$).
+     * Horizontal translations improve tracking of the ZMP, while vertical
+     * translations improve tracking of the normalized stiffness.
      *
      */
     void updateCoMAdmittanceControl();
+
+    /** Update CoM horizontal admittance control.
+     *
+     * ZMP compensation by horizontal CoM motions is based on
+     * "体幹位置コンプライアンス制御によるモデル誤差吸収", Section 6.2.2 of Dr
+     * Nagasaka's PhD thesis (1999) available from:
+     * <https://sites.google.com/site/humanoidchannel/home/publication>. We
+     * follow the same approach but use CoM damping control with an internal
+     * leaky integrator.
+     *
+     * \note ZMPCC stands for "ZMP Compensation Control".
+     *
+     */
+    void updateCoMZMPCC();
+
+    /** Update CoM vertical admittance control.
+     *
+     * This is an original idea we experiment in this controller. The altitude
+     * of the CoM (i.e. its coordinate in [m] in the direction of gravity) is
+     * regulated to track the VHIP normalized stiffness \f$\lambda\f$ (relating
+     * CoM-ZMP deviations to CoM acceleration by \f$\ddot{c} = \lambda (c -
+     * r)\f$).
+     *
+     */
+    void updateCoMAltitude();
 
     /** Apply foot force difference control.
      *
@@ -372,6 +390,9 @@ namespace vhip_walking
     Eigen::Vector3d dcmAverageError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d dcmError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d desiredCoMAccel_;
+    Eigen::Vector3d altccCoMAccel_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d altccCoMOffset_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d altccCoMVel_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d measuredCoM_;
     Eigen::Vector3d measuredCoMd_;
     Eigen::Vector3d measuredZMP_;
@@ -381,6 +402,7 @@ namespace vhip_walking
     Eigen::Vector3d zmpccError_ = Eigen::Vector3d::Zero();
     ExponentialMovingAverage dcmIntegrator_;
     FDQPWeights fdqpWeights_;
+    LeakyIntegrator altccIntegrator_;
     LeakyIntegrator zmpccIntegrator_;
     bool inTheAir_ = false; /**< Is the robot in the air? */
     bool lipmMode_ = false; /**< Perform LIPM rather than VHIP tracking? */
