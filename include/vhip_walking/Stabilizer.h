@@ -106,7 +106,7 @@ namespace vhip_walking
      */
     void disable();
 
-    /** Compute ZMP of a wrench in the output frame.
+    /** Compute ZMP of a wrench in the ZMP frame computed by updateZMPFrame().
      *
      * \param wrench Wrench at the origin of the world frame.
      *
@@ -432,7 +432,7 @@ namespace vhip_walking
     mc_rtc::Configuration config_; /**< Stabilizer configuration dictionary */
     std::vector<std::string> comActiveJoints_; /**< Joints used by CoM IK task */
     sva::ForceVecd distribWrench_ = sva::ForceVecd::Zero();
-    sva::ForceVecd measuredWrench_; /**< Net contact wrench measured from sensors */
+    sva::ForceVecd measuredWrench_; /**< Measured net contact wrench in the world frame */
     sva::MotionVecd contactDamping_;
     sva::MotionVecd contactStiffness_;
     sva::PTransformd zmpFrame_;

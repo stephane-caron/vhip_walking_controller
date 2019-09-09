@@ -29,7 +29,7 @@
 
 namespace vhip_walking
 {
-  /** Observe net contact wrench from force/torque measurements.
+  /** Measure net contact wrench in the world frame from force/torque sensors.
    *
    */
   struct NetWrenchObserver
@@ -53,7 +53,7 @@ namespace vhip_walking
      */
     void update(const mc_rbdyn::Robot & robot, const Contact & contact);
 
-    /** Net contact wrench.
+    /** Net contact wrench in the world frame.
      *
      */
     const sva::ForceVecd & wrench()
@@ -86,7 +86,7 @@ namespace vhip_walking
 
   private:
     Eigen::Vector3d netZMP_; /**< Net wrench ZMP in the contact frame */
-    std::vector<std::string> sensorNames_ = {"LeftFootForceSensor", "RightFootForceSensor"}; /**< List of force/torque sensors */
-    sva::ForceVecd netWrench_; /**< Net contact wrench */
+    std::vector<std::string> sensorNames_ = {"LeftFootForceSensor", "RightFootForceSensor"}; /**< List of force/torque sensor identifiers */
+    sva::ForceVecd netWrench_; /**< Net contact wrench in the world frame */
   };
 }
