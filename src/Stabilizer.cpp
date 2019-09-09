@@ -207,6 +207,10 @@ namespace vhip_walking
         [this](double T) { altccIntegrator_.rate(T); }));
     gui->addElement(
       {"Stabilizer", "Options"},
+      NumberInput(
+        "Mass [kg]",
+        [this]() { return mass_; },
+        [this](double mass) { mass_ = clamp(mass, 30., 45.); }),
       ComboInput(
         "Template model",
         {TEMPLATE_MODEL_LABELS[0], TEMPLATE_MODEL_LABELS[1]},
