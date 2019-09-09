@@ -140,11 +140,6 @@ namespace vhip_walking
       Button(
         "Reconfigure",
         [this]() { reconfigure(); }),
-      ComboInput(
-        "Template model",
-        {TEMPLATE_MODEL_LABELS[0], TEMPLATE_MODEL_LABELS[1]},
-        [this]() { return templateModelToString(model_); },
-        [this](const std::string & model) { model_ = templateModelFromString(model); }),
       ArrayInput(
         "Foot admittance",
         {"CoPx", "CoPy", "DFz"},
@@ -190,30 +185,37 @@ namespace vhip_walking
     gui->addElement(
       {"Stabilizer", "Integrators"},
       Button(
-        "Reset altitude integrator",
-        [this]() { altccIntegrator_.setZero(); }),
-      Button(
         "Reset DCM integrator",
         [this]() { dcmIntegrator_.setZero(); }),
       Button(
         "Reset ZMPCC integrator",
         [this]() { zmpccIntegrator_.setZero(); }),
-      NumberInput(
-        "Altitude CC leak rate [Hz]",
-        [this]() { return altccIntegrator_.rate(); },
-        [this](double T) { altccIntegrator_.rate(T); }),
+      Button(
+        "Reset Altitude integrator",
+        [this]() { altccIntegrator_.setZero(); }),
       NumberInput(
         "DCM integrator T",
         [this]() { return dcmIntegrator_.timeConstant(); },
         [this](double T) { dcmIntegrator_.timeConstant(T); }),
-      Checkbox(
-        "Use ZMPCC only in double support?",
-        [this]() { return zmpccOnlyDS_; },
-        [this]() { zmpccOnlyDS_ = !zmpccOnlyDS_; }),
       NumberInput(
         "ZMPCC leak rate [Hz]",
         [this]() { return zmpccIntegrator_.rate(); },
-        [this](double T) { zmpccIntegrator_.rate(T); }));
+        [this](double T) { zmpccIntegrator_.rate(T); }),
+      NumberInput(
+        "Altitude CC leak rate [Hz]",
+        [this]() { return altccIntegrator_.rate(); },
+        [this](double T) { altccIntegrator_.rate(T); }));
+    gui->addElement(
+      {"Stabilizer", "Options"},
+      ComboInput(
+        "Template model",
+        {TEMPLATE_MODEL_LABELS[0], TEMPLATE_MODEL_LABELS[1]},
+        [this]() { return templateModelToString(model_); },
+        [this](const std::string & model) { model_ = templateModelFromString(model); }),
+      Checkbox(
+        "Use ZMPCC only in double support?",
+        [this]() { return zmpccOnlyDS_; },
+        [this]() { zmpccOnlyDS_ = !zmpccOnlyDS_; }));
     gui->addElement(
       {"Stabilizer", "Status"},
       Label(
@@ -234,13 +236,13 @@ namespace vhip_walking
       ArrayLabel("DCM error [mm]",
         {"x", "y", "z"},
         [this]() { return roundVec(dcmError_ * 1000.); }),
-      ArrayLabel("DCM avg. error [mm]",
+      ArrayLabel("DCM average error [mm]",
         {"x", "y", "z"},
         [this]() { return roundVec(dcmAverageError_ * 1000.); }),
       ArrayLabel("CoM offset [mm]",
         {"x", "y", "z"},
         [this]() { return roundVec(comOffset_ * 1000.); }),
-      ArrayLabel("Wrench error",
+      ArrayLabel("Contact wrench error",
         {"ZMPx [mm]", "ZMPy [mm]", "lambda [Hz^2]"},
         [this]() { return roundVec({zmpccError_.x() * 1000., zmpccError_.y() * 1000., distribLambda_ - measuredLambda_}); }),
       Label("Foot height diff [mm]",
