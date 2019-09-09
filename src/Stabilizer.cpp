@@ -32,9 +32,9 @@ namespace vhip_walking
   {
     inline Eigen::Vector3d roundToMillimeter(const Eigen::Vector3d & error)
     {
-      double x = -std::round(error.x() * 1000.);
-      double y = -std::round(error.y() * 1000.);
-      double z = -std::round(error.z() * 1000.);
+      double x = std::round(error.x() * 1000.);
+      double y = std::round(error.y() * 1000.);
+      double z = std::round(error.z() * 1000.);
       return Eigen::Vector3d{x, y, z};
     }
 
