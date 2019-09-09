@@ -163,6 +163,25 @@ struct LeakyIntegrator<double> : LeakyIntegratorBase<double>
     }
   }
 
+  /** Clamp output between two values.
+   *
+   * \param min Minimum output.
+   *
+   * \param max Maximum output.
+   *
+   */
+  void clamp(double min, double max)
+  {
+    if (this->integral_ < min)
+    {
+      this->integral_ = min;
+    }
+    else if (this->integral_ > max)
+    {
+      this->integral_ = max;
+    }
+  }
+
   /** Reset integral to zero.
    *
    */
