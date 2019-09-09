@@ -30,11 +30,11 @@ namespace vhip_walking
 {
   namespace
   {
-    inline Eigen::Vector3d roundVec(const Eigen::Vector3d & vec)
+    inline Eigen::Vector3d roundVec(const Eigen::Vector3d & vec, double fact = 1.)
     {
-      double x = std::round(vec.x());
-      double y = std::round(vec.y());
-      double z = std::round(vec.z());
+      double x = std::round(vec.x() * fact) / fact;
+      double y = std::round(vec.y() * fact) / fact;
+      double z = std::round(vec.z() * fact) / fact;
       return Eigen::Vector3d{x, y, z};
     }
 
@@ -247,8 +247,8 @@ namespace vhip_walking
         {"x", "y", "z"},
         [this]() { return roundVec(comOffset_ * 1000.); }),
       ArrayLabel("Contact wrench error",
-        {"ZMPx [mm]", "ZMPy [mm]", "lambda [Hz^2]"},
-        [this]() { return roundVec({zmpccError_.x() * 1000., zmpccError_.y() * 1000., distribLambda_ - measuredLambda_}); }),
+        {"ZMPx [cm]", "ZMPy [cm]", "lambda [Hz^2]"},
+        [this]() { return roundVec({zmpccError_.x() * 100., zmpccError_.y() * 100., distribLambda_ - measuredLambda_}, /* fact = */ 10.); }),
       Label("Foot height diff [mm]",
         [this]() { return std::round(vfcZCtrl_ * 1000.); }));
   }
@@ -768,11 +768,12 @@ namespace vhip_walking
 
   void Stabilizer::updateCoMAltitude()
   {
-    Eigen::Vector3d comTarget = comTask->com();
+    // Eigen::Vector3d comTarget = comTask->com();
     double pendulumHeight = pendulum_.com().z() - zmpFrame_.translation().z();
-    double targetHeight = comTarget.z() - zmpFrame_.translation().z();
+    //double targetHeight = comTarget.z() - zmpFrame_.translation().z();
+    double measuredHeight = measuredCoM_.z() - zmpFrame_.translation().z();
     distribLambda_ = distribWrench_.force().z() / (mass_ * pendulumHeight);
-    measuredLambda_ = measuredWrench_.force().z() / (mass_ * targetHeight);
+    measuredLambda_ = measuredWrench_.force().z() / (mass_ * measuredHeight);
     if (model_ == TemplateModel::LinearInvertedPendulum)
     {
       altccIntegrator_.add(0., dt_);

@@ -48,6 +48,10 @@
       "damping": 0.0,
       "stiffness": 1000.0
     },
+    "altcc":
+    {
+      "integrator_leak_rate": 0.01
+    },
     "zmpcc":
     {
       "integrator_leak_rate": 0.1
