@@ -30,11 +30,11 @@ namespace vhip_walking
 {
   namespace
   {
-    inline Eigen::Vector3d roundToMillimeter(const Eigen::Vector3d & error)
+    inline Eigen::Vector3d roundVec(const Eigen::Vector3d & vec)
     {
-      double x = std::round(error.x() * 1000.);
-      double y = std::round(error.y() * 1000.);
-      double z = std::round(error.z() * 1000.);
+      double x = std::round(vec.x());
+      double y = std::round(vec.y());
+      double z = std::round(vec.z());
       return Eigen::Vector3d{x, y, z};
     }
 
@@ -190,14 +190,18 @@ namespace vhip_walking
     gui->addElement(
       {"Stabilizer", "Integrators"},
       Button(
+        "Reset altitude integrator",
+        [this]() { altccIntegrator_.setZero(); }),
+      Button(
         "Reset DCM integrator",
         [this]() { dcmIntegrator_.setZero(); }),
       Button(
         "Reset ZMPCC integrator",
         [this]() { zmpccIntegrator_.setZero(); }),
-      Button(
-        "Reset altitude integrator",
-        [this]() { altccIntegrator_.setZero(); }),
+      NumberInput(
+        "Altitude CC leak rate [Hz]",
+        [this]() { return altccIntegrator_.rate(); },
+        [this](double T) { altccIntegrator_.rate(T); }),
       NumberInput(
         "DCM integrator T",
         [this]() { return dcmIntegrator_.timeConstant(); },
@@ -206,10 +210,6 @@ namespace vhip_walking
         "Use ZMPCC only in double support?",
         [this]() { return zmpccOnlyDS_; },
         [this]() { zmpccOnlyDS_ = !zmpccOnlyDS_; }),
-      NumberInput(
-        "Altitude CC leak rate [Hz]",
-        [this]() { return altccIntegrator_.rate(); },
-        [this](double T) { altccIntegrator_.rate(T); }),
       NumberInput(
         "ZMPCC leak rate [Hz]",
         [this]() { return zmpccIntegrator_.rate(); },
@@ -233,15 +233,18 @@ namespace vhip_walking
         }),
       ArrayLabel("DCM error [mm]",
         {"x", "y", "z"},
-        [this]() { return roundToMillimeter(dcmError_); }),
+        [this]() { return roundVec(dcmError_ * 1000.); }),
       ArrayLabel("DCM avg. error [mm]",
         {"x", "y", "z"},
-        [this]() { return roundToMillimeter(dcmAverageError_); }),
+        [this]() { return roundVec(dcmAverageError_ * 1000.); }),
       ArrayLabel("CoM offset [mm]",
         {"x", "y", "z"},
-        [this]() { return roundToMillimeter(comOffset_); }),
+        [this]() { return roundVec(comOffset_ * 1000.); }),
+      ArrayLabel("Wrench error",
+        {"ZMPx [mm]", "ZMPy [mm]", "lambda [Hz^2]"},
+        [this]() { return roundVec({zmpccError_.x() * 1000., zmpccError_.y() * 1000., distribLambda_ - measuredLambda_}); }),
       Label("Foot height diff [mm]",
-        [this]() { return std::round(1000. * vfcZCtrl_); }));
+        [this]() { return std::round(vfcZCtrl_ * 1000.); }));
   }
 
   void Stabilizer::disable()
@@ -734,6 +737,8 @@ namespace vhip_walking
 
   void Stabilizer::updateCoMZMPCC()
   {
+    auto distribZMP = computeZMP(distribWrench_);
+    zmpccError_ = distribZMP - measuredZMP_;
     if (zmpccOnlyDS_ && contactState_ != ContactState::DoubleSupport)
     {
       zmpccIntegrator_.add(Eigen::Vector3d::Zero(), dt_); // leak to zero
@@ -742,8 +747,6 @@ namespace vhip_walking
     }
     else
     {
-      auto distribZMP = computeZMP(distribWrench_);
-      zmpccError_ = distribZMP - measuredZMP_;
       const Eigen::Matrix3d & R_0_c = zmpFrame_.rotation();
       const Eigen::Transpose<const Eigen::Matrix3d> R_c_0 = R_0_c.transpose();
       Eigen::Vector3d comAdmittanceZMP = {comAdmittance_.x(), comAdmittance_.y(), 0.};
@@ -758,6 +761,11 @@ namespace vhip_walking
 
   void Stabilizer::updateCoMAltitude()
   {
+    Eigen::Vector3d comTarget = comTask->com();
+    double pendulumHeight = pendulum_.com().z() - zmpFrame_.translation().z();
+    double targetHeight = comTarget.z() - zmpFrame_.translation().z();
+    distribLambda_ = distribWrench_.force().z() / (mass_ * pendulumHeight);
+    measuredLambda_ = measuredWrench_.force().z() / (mass_ * targetHeight);
     if (model_ == TemplateModel::LinearInvertedPendulum)
     {
       altccIntegrator_.add(0., dt_);
@@ -766,12 +774,6 @@ namespace vhip_walking
     }
     else
     {
-      Eigen::Vector3d comTarget = comTask->com();
-      double pendulumHeight = pendulum_.com().z() - zmpFrame_.translation().z();
-      double targetHeight = comTarget.z() - zmpFrame_.translation().z();
-      distribLambda_ = distribWrench_.force().z() / (mass_ * pendulumHeight);
-      measuredLambda_ = measuredWrench_.force().z() / (mass_ * targetHeight);
-
       double newVel = comAdmittance_.z() * (measuredLambda_ - distribLambda_);
       double newAccel = (newVel - altccCoMVel_) / dt_;
       altccIntegrator_.add(newVel, dt_);
