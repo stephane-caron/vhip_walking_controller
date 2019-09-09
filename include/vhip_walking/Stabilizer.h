@@ -427,6 +427,7 @@ namespace vhip_walking
     double dcmGain_ = 1.; /**< Proportional gain on DCM error */
     double dcmIntegralGain_ = 5.; /**< Integral gain on DCM error */
     double dfzAdmittance_ = 1e-4; /**< Admittance for vertical foot force control */
+    double distribLambda_ = 0.; /**< Normalized stiffness required by FDQP */
     double dt_ = 0.005; /**< Controller cycle in [s] */
     double leftFootRatio_ = 0.5; /**< Desired ratio of total normal foot force applied to left foot */
     double logMeasuredDFz_ = 0.; /**< Measured vertical force difference between left and right foot */
@@ -434,6 +435,7 @@ namespace vhip_walking
     double logTargetDFz_ = 0.; /**< Desired vertical force difference between left and right foot */
     double logTargetSTz_ = 0.; /**< Desired vertical position average between left and right foot */
     double mass_ = 38.; /**< Robot mass in [kg] */
+    double measuredLambda_ = 0.; /**< Normalized stiffness measured from sensors */
     double runTime_ = 0.; /**< Measured average duration in [s] of a call to run() */
     double swingFootStiffness_ = 2000.; /**< Stiffness of swing foot IK task */
     double swingFootWeight_ = 500.; /**< Weight of swing foot IK task */

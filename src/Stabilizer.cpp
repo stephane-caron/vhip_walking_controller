@@ -109,6 +109,8 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_fdqp_weights_netWrench", [this]() { return std::pow(fdqpWeights_.netWrenchSqrt, 2); });
     logger.addLogEntry("stabilizer_fdqp_weights_pressure", [this]() { return std::pow(fdqpWeights_.pressureSqrt, 2); });
     logger.addLogEntry("stabilizer_integrator_timeConstant", [this]() { return dcmIntegrator_.timeConstant(); });
+    logger.addLogEntry("stabilizer_lambda_distrib", [this]() { return distribLambda_; });
+    logger.addLogEntry("stabilizer_lambda_measured", [this]() { return measuredLambda_; });
     logger.addLogEntry("stabilizer_vdc_damping", [this]() { return vdcDamping_; });
     logger.addLogEntry("stabilizer_vdc_frequency", [this]() { return vdcFrequency_; });
     logger.addLogEntry("stabilizer_vdc_stiffness", [this]() { return vdcStiffness_; });
@@ -764,11 +766,12 @@ namespace vhip_walking
     else
     {
       Eigen::Vector3d comTarget = comTask->com();
-      double height = comTarget.z() - zmpFrame_.translation().z();
-      double distribLambda = distribWrench_.force().z() / (mass_ * height);
-      double measuredLambda = measuredWrench_.force().z() / (mass_ * height);
+      double pendulumHeight = pendulum_.com().z() - zmpFrame_.translation().z();
+      double targetHeight = comTarget.z() - zmpFrame_.translation().z();
+      distribLambda_ = distribWrench_.force().z() / (mass_ * pendulumHeight);
+      measuredLambda_ = measuredWrench_.force().z() / (mass_ * targetHeight);
 
-      double newVel = comAdmittance_.z() * (measuredLambda - distribLambda);
+      double newVel = comAdmittance_.z() * (measuredLambda_ - distribLambda_);
       double newAccel = (newVel - altccCoMVel_) / dt_;
       altccIntegrator_.add(newVel, dt_);
       altccCoMAccel_ = newAccel;
