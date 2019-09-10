@@ -301,10 +301,15 @@ namespace vhip_walking
      */
     void checkInTheAir();
 
-    /** Compute desired wrench based on DCM error.
+    /** Compute desired wrench using the LIP template model.
      *
      */
-    sva::ForceVecd computeDesiredWrench();
+    sva::ForceVecd computeLIPDesiredWrench();
+
+    /** Compute desired wrench using the VHIP template model.
+     *
+     */
+    sva::ForceVecd computeVHIPDesiredWrench();
 
     /** Distribute a desired wrench in double support.
      *

@@ -529,7 +529,17 @@ namespace vhip_walking
     updateSupportFootGains();
     updateZMPFrame();
 
-    auto desiredWrench = computeDesiredWrench();
+    sva::ForceVecd desiredWrench;
+    switch (model_)
+    {
+      case TemplateModel::LinearInvertedPendulum:
+        desiredWrench = computeLIPDesiredWrench();
+        break;
+      case TemplateModel::VariableHeightInvertedPendulum:
+      default:
+        desiredWrench = computeVHIPDesiredWrench();
+        break;
+    }
 
     switch (contactState_)
     {
@@ -561,7 +571,7 @@ namespace vhip_walking
     measuredWrench_ = wrench;
   }
 
-  sva::ForceVecd Stabilizer::computeDesiredWrench()
+  sva::ForceVecd Stabilizer::computeLIPDesiredWrench()
   {
     double omega = pendulum_.omega();
     double omega2 = omega * omega;
@@ -581,6 +591,11 @@ namespace vhip_walking
     desiredCoMAccel_ += dcmIntegralGain_ * omega2 * dcmAverageError_;
     auto desiredForce = mass_ * (desiredCoMAccel_ - world::gravity);
     return {pendulum_.com().cross(desiredForce), desiredForce};
+  }
+
+  sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
+  {
+    return sva::ForceVecd::Zero();
   }
 
   void Stabilizer::distributeWrench(const sva::ForceVecd & desiredWrench)
@@ -770,10 +785,8 @@ namespace vhip_walking
 
   void Stabilizer::updateCoMAltitude()
   {
-    // Eigen::Vector3d comTarget = comTask->com();
-    double pendulumHeight = pendulum_.com().z() - zmpFrame_.translation().z();
-    //double targetHeight = comTarget.z() - zmpFrame_.translation().z();
     double measuredHeight = measuredCoM_.z() - zmpFrame_.translation().z();
+    double pendulumHeight = pendulum_.com().z() - zmpFrame_.translation().z();
     distribLambda_ = distribWrench_.force().z() / (mass_ * pendulumHeight);
     measuredLambda_ = measuredWrench_.force().z() / (mass_ * measuredHeight);
     if (model_ == TemplateModel::LinearInvertedPendulum)
