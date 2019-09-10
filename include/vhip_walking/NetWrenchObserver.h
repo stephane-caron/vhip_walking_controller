@@ -92,8 +92,8 @@ namespace vhip_walking
     void updateNetZMP(const Contact & contact);
 
   private:
-    Eigen::Vector3d netZMP_; /**< Net wrench ZMP in the contact frame */
+    Eigen::Vector3d netZMP_ = Eigen::Vector3d::Zero(); /**< Net wrench ZMP in the contact frame */
     std::vector<std::string> sensorNames_ = {"LeftFootForceSensor", "RightFootForceSensor"}; /**< List of force/torque sensor identifiers */
-    sva::ForceVecd netWrench_; /**< Net contact wrench in the world frame */
+    sva::ForceVecd netWrench_ = sva::ForceVecd::Zero(); /**< Net contact wrench in the world frame */
   };
 }
