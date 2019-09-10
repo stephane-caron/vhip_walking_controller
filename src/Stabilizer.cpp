@@ -776,7 +776,6 @@ namespace vhip_walking
     double measuredHeight = measuredCoM_.z() - zmpFrame_.translation().z();
     distribLambda_ = distribWrench_.force().z() / (mass_ * pendulumHeight);
     measuredLambda_ = measuredWrench_.force().z() / (mass_ * measuredHeight);
-
     if (model_ == TemplateModel::LinearInvertedPendulum)
     {
       altccIntegrator_.add(0., dt_);
@@ -785,18 +784,12 @@ namespace vhip_walking
     }
     else
     {
-      double newVel = comAdmittance_.z() * (measuredLambda_ - distribLambda_);
+      double newVel = comAdmittance_.z() * (distribLambda_ - measuredLambda_);
       double newAccel = (newVel - altccCoMVel_) / dt_;
       altccIntegrator_.add(newVel, dt_);
       altccCoMAccel_ = newAccel;
       altccCoMVel_ = newVel;
     }
-
-    constexpr double MIN_COM_HEIGHT = 0.55; // TODO: from configuration
-    constexpr double MAX_COM_HEIGHT = 0.85; // TODO: from configuration
-    double minOffset = MIN_COM_HEIGHT - pendulumHeight;
-    double maxOffset = MAX_COM_HEIGHT - pendulumHeight;
-    altccIntegrator_.clamp(minOffset, maxOffset);
     altccCoMOffset_ = altccIntegrator_.eval();
   }
 
