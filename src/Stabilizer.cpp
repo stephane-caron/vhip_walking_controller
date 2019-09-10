@@ -89,6 +89,8 @@ namespace vhip_walking
             return -3;
         }
       });
+    logger.addLogEntry("error_com", [this]() -> Eigen::Vector3d { return pendulum_.com() - measuredCoM_; });
+    logger.addLogEntry("error_comd", [this]() -> Eigen::Vector3d { return pendulum_.comd() - measuredCoMd_; });
     logger.addLogEntry("error_dcm", [this]() { return dcmError_; });
     logger.addLogEntry("error_dcmAverage", [this]() { return dcmAverageError_; });
     logger.addLogEntry("error_dfz", [this]() { return logTargetDFz_ - logMeasuredDFz_; });
