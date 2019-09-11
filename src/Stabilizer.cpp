@@ -510,6 +510,7 @@ namespace vhip_walking
         zmpFrame_.translation().x() - xmin,
         ymax - zmpFrame_.translation().y(),
         zmpFrame_.translation().y() - ymin;
+      zmpArea_ = Eigen::HrepXd(hrepMat, hrepVec);
       zmpPolygon_.clear();
       zmpPolygon_.push_back(Eigen::Vector3d{xmax, ymax, zmpFrame_.translation().z()});
       zmpPolygon_.push_back(Eigen::Vector3d{xmax, ymin, zmpFrame_.translation().z()});
