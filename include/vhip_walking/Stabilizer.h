@@ -422,8 +422,8 @@ namespace vhip_walking
     Eigen::Vector3d measuredCoM_;
     Eigen::Vector3d measuredCoMd_;
     Eigen::Vector3d measuredZMP_;
-    Eigen::Vector3d vhipDCM_;
-    Eigen::Vector3d vhipZMP_;
+    Eigen::Vector3d vhipDCM_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d vhipZMP_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMAccel_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMOffset_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMVel_ = Eigen::Vector3d::Zero();
