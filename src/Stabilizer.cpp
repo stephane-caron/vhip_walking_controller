@@ -93,7 +93,9 @@ namespace vhip_walking
     logger.addLogEntry("error_dcmAverage", [this]() { return dcmAverageError_; });
     logger.addLogEntry("error_dfz", [this]() { return logTargetDFz_ - logMeasuredDFz_; });
     logger.addLogEntry("error_sfz", [this]() { return logTargetSTz_ - logMeasuredSTz_; });
-    logger.addLogEntry("perf_Stabilizer", [this]() { return runTime_; });
+    logger.addLogEntry("perf_Stabilizer_fdqp", [this]() { return fdqpRunTime_; });
+    logger.addLogEntry("perf_Stabilizer_run", [this]() { return runTime_; });
+    logger.addLogEntry("perf_Stabilizer_vhip", [this]() { return vhipRunTime_; });
     logger.addLogEntry("stabilizer_admittance_com", [this]() { return comAdmittance_; });
     logger.addLogEntry("stabilizer_admittance_cop", [this]() { return copAdmittance_; });
     logger.addLogEntry("stabilizer_admittance_dfz", [this]() { return dfzAdmittance_; });
@@ -566,33 +568,12 @@ namespace vhip_walking
     updateSupportFootGains();
     updateZMPFrame();
 
-    sva::ForceVecd desiredWrench;
-    switch (model_)
-    {
-      case TemplateModel::LinearInvertedPendulum:
-        desiredWrench = computeLIPDesiredWrench();
-        break;
-      case TemplateModel::VariableHeightInvertedPendulum:
-      default:
-        desiredWrench = computeVHIPDesiredWrench();
-        break;
-    }
+    sva::ForceVecd desiredWrench =
+      (model_ == TemplateModel::VariableHeightInvertedPendulum)
+      ? computeVHIPDesiredWrench()
+      : computeLIPDesiredWrench();
 
-    switch (contactState_)
-    {
-      case ContactState::DoubleSupport:
-        distributeWrench(desiredWrench);
-        break;
-      case ContactState::LeftFoot:
-        saturateWrench(desiredWrench, leftFootTask);
-        rightFootTask->setZeroTargetWrench();
-        break;
-      case ContactState::RightFoot:
-        saturateWrench(desiredWrench, rightFootTask);
-        leftFootTask->setZeroTargetWrench();
-        break;
-    }
-
+    distributeWrench(desiredWrench);
     updateCoMAdmittanceControl();
     updateFootForceDifferenceControl();
 
@@ -632,6 +613,9 @@ namespace vhip_walking
 
   sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
   {
+    using namespace std::chrono;
+    auto startTime = high_resolution_clock::now();
+
     double vrpGain = dcmGain_ + 1.;
     double refOmega = pendulum_.omega();
     double refLambda = refOmega * refOmega;
@@ -772,10 +756,37 @@ namespace vhip_walking
 
     Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d desiredForce = mass_ * vhipLambda_ * (refCoM - vhipZMP_);
+
+    auto endTime = high_resolution_clock::now();
+    vhipRunTime_ = 1000. * duration_cast<duration<double>>(endTime - startTime).count();
     return {vhipZMP_.cross(desiredForce), desiredForce};
   }
 
   void Stabilizer::distributeWrench(const sva::ForceVecd & desiredWrench)
+  {
+    using namespace std::chrono;
+    auto startTime = high_resolution_clock::now();
+
+    switch (contactState_)
+    {
+      case ContactState::DoubleSupport:
+        distributeWrenchDS(desiredWrench);
+        break;
+      case ContactState::LeftFoot:
+        distributeWrenchSS(desiredWrench, leftFootTask);
+        rightFootTask->setZeroTargetWrench();
+        break;
+      case ContactState::RightFoot:
+        distributeWrenchSS(desiredWrench, rightFootTask);
+        leftFootTask->setZeroTargetWrench();
+        break;
+    }
+
+    auto endTime = high_resolution_clock::now();
+    fdqpRunTime_ = 1000. * duration_cast<duration<double>>(endTime - startTime).count();
+  }
+
+  void Stabilizer::distributeWrenchDS(const sva::ForceVecd & desiredWrench)
   {
     // Variables
     // ---------
@@ -887,7 +898,7 @@ namespace vhip_walking
     rightFootTask->targetForce(w_r_rc.force());
   }
 
-  void Stabilizer::saturateWrench(const sva::ForceVecd & desiredWrench, std::shared_ptr<mc_tasks::force::CoPTask> & footTask)
+  void Stabilizer::distributeWrenchSS(const sva::ForceVecd & desiredWrench, std::shared_ptr<mc_tasks::force::CoPTask> & footTask)
   {
     constexpr unsigned NB_CONS = 16;
     constexpr unsigned NB_VAR = 6;

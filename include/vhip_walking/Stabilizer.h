@@ -319,21 +319,28 @@ namespace vhip_walking
      */
     sva::ForceVecd computeVHIPDesiredWrench();
 
-    /** Distribute a desired wrench in double support.
+    /** Distribute a desired wrench to supporting contacts.
      *
      * \param desiredWrench Desired resultant reaction wrench.
      *
      */
     void distributeWrench(const sva::ForceVecd & desiredWrench);
 
-    /** Project desired wrench to single support foot.
+    /** Distribute a desired wrench in double support.
+     *
+     * \param desiredWrench Desired resultant reaction wrench.
+     *
+     */
+    void distributeWrenchDS(const sva::ForceVecd & desiredWrench);
+
+    /** Project desired wrench to the support foot in SSP.
      *
      * \param desiredWrench Desired resultant reaction wrench.
      *
      * \param footTask Target foot.
      *
      */
-    void saturateWrench(const sva::ForceVecd & desiredWrench, std::shared_ptr<mc_tasks::force::CoPTask> & footTask);
+    void distributeWrenchSS(const sva::ForceVecd & desiredWrench, std::shared_ptr<mc_tasks::force::CoPTask> & footTask);
 
     /** Reset admittance, damping and stiffness for every foot in contact.
      *
@@ -447,6 +454,7 @@ namespace vhip_walking
     double dfzAdmittance_ = 1e-4; /**< Admittance for vertical foot force control */
     double distribLambda_ = 0.; /**< Normalized stiffness required by FDQP */
     double dt_ = 0.005; /**< Controller cycle in [s] */
+    double fdqpRunTime_ = 0.; /**< Measured average duration in [s] of a call to distributeWrench() */
     double leftFootRatio_ = 0.5; /**< Desired ratio of total normal foot force applied to left foot */
     double logMeasuredDFz_ = 0.; /**< Measured vertical force difference between left and right foot */
     double logMeasuredSTz_ = 0.; /**< Model vertical position average between left and right foot */
@@ -464,6 +472,7 @@ namespace vhip_walking
     double vfcZCtrl_ = 0.;
     double vhipLambda_ = 0.;
     double vhipOmega_ = 0.;
+    double vhipRunTime_ = 0.; /**< Measured average duration in [s] of a call to computeVHIPDesiredWrench() */
     mc_rtc::Configuration config_; /**< Stabilizer configuration dictionary */
     std::vector<Eigen::Vector3d> zmpPolygon_; /**< Vertices of the ZMP support polygon in the world frame */
     std::vector<std::string> comActiveJoints_; /**< Joints used by CoM IK task */
