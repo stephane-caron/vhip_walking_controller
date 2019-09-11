@@ -626,12 +626,119 @@ namespace vhip_walking
 
   sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
   {
-    double omega_d = pendulum_.omega();
-    double lambda_d = omega_d * omega_d;
+    double vrpGain = dcmGain_ + 1.;
+    double refOmega = pendulum_.omega();
+    double refLambda = refOmega * refOmega;
     Eigen::Vector3d comError = measuredCoM_ - pendulum_.com();
     Eigen::Vector3d comdError = measuredCoMd_ - pendulum_.comd();
-    Eigen::Vector3d refVRP = pendulum_.zmp() - world::gravity / lambda_d;
-    dcmError_ = comError + comdError / omega_d;
+    Eigen::Vector3d refDCM = pendulum_.com() + pendulum_.comd() / refOmega;
+    Eigen::Vector3d refVRP = pendulum_.zmp() - world::gravity / refLambda;
+    const Eigen::Vector3d & refZMP = pendulum_.zmp();
+
+    // TODO: move to configuration file
+    constexpr double MAX_DCM_HEIGHT = 0.9; // [m]
+    constexpr double MIN_DCM_HEIGHT = 0.5; // [m]
+    constexpr double MAX_FORCE = 500.; // [N]
+    constexpr double MIN_FORCE = 1.; // [N]
+
+    double measuredHeight = measuredCoM_.z() - zmpFrame_.translation().z();
+    double lambdaMax = MAX_FORCE / (mass_ * measuredHeight);
+    double lambdaMin = MIN_FORCE / (mass_ * measuredHeight);
+    double omegaMax = std::sqrt(lambdaMax);
+    double omegaMin = std::sqrt(lambdaMin);
+
+    constexpr unsigned NB_VARIABLES = 3 + 1 + 2 + 1 + 3;
+    Eigen::MatrixXd A;
+    Eigen::VectorXd b;
+    A.setZero(3, NB_VARIABLES);
+    A <<
+      0., 0., 0., 0., 0., 0., 0., 1., 0., 0.,
+      0., 0., 0., 0., 0., 0., 0., 0., 1., 0.,
+      0., 0., 0., 0., 0., 0., 0., 0., 0., std::sqrt(1e-3),
+    b.setZero(3);
+    
+    unsigned nbConstraints = 3 + 3 + 1 + zmpArea_.first.rows() + 1;
+    Eigen::VectorXd bl, bu;
+    bl.setConstant(NB_VARIABLES + nbConstraints, -1e5);
+    bu.setConstant(NB_VARIABLES + nbConstraints, +1e5);
+    auto blVar = bl.head<NB_VARIABLES>();
+    auto buVar = bu.head<NB_VARIABLES>();
+    blVar <<
+      -1., // 0: Delta xi_x [m]
+      -1., // 1: Delta xi_y [m]
+      -1., // 2: Delta xi_z [m]
+      omegaMin - refOmega, // refOmega + Delta_omega >= omegaMin
+      -1., // 4: Delta r_x [m]
+      -1., // 5: Delta r_y [m]
+      lambdaMin - refLambda, // refLambda + Delta_lambda >= lambdaMin 
+      -1., // 7: Delta sigma_x [m]
+      -1., // 8: Delta sigma_y [m]
+      -1.; // 9: Delta sigma_z [m]
+    buVar <<
+      +1., // 0: Delta xi_x [m]
+      +1., // 1: Delta xi_y [m]
+      +1., // 2: Delta xi_z [m]
+      omegaMax - refOmega, // refOmega + Delta_omega <= omegaMax
+      +1., // 4: Delta r_x [m]
+      +1., // 5: Delta r_y [m]
+      lambdaMax - refLambda, // refLambda + Delta_lambda <= lambdaMax
+      +1., // 7: Delta sigma_x [m]
+      +1., // 8: Delta sigma_y [m]
+      +1.; // 9: Delta sigma_z [m]
+
+    auto blCons = bl.tail(nbConstraints);
+    auto buCons = bu.tail(nbConstraints);
+    Eigen::MatrixXd C;
+    C.setZero(nbConstraints, NB_VARIABLES);
+
+    unsigned curRow = 0;
+    unsigned curHeight = 3;
+    C.block(curRow, 0, curHeight, 3) = -vrpGain * Eigen::Matrix3d::Identity();
+    C.block(curRow, 3, curHeight, 1) = (refDCM - refVRP) / refOmega;
+    C.block(curRow, 4, curHeight, 2) = zmpFrame_.rotation().block<3, 2>(0, 0);
+    C.block(curRow, 6, curHeight, 1) = (refZMP - refDCM) / refLambda;
+    C.block(curRow, 7, curHeight, 3) = Eigen::Matrix3d::Identity();
+    blCons.segment(curRow, curHeight).setZero();
+    buCons.segment(curRow, curHeight).setZero();
+
+    curRow += curHeight;
+    curHeight = 3;
+    C.block(curRow, 0, curHeight, 3) = Eigen::Matrix3d::Identity();
+    C.block(curRow, 3, curHeight, 1) = measuredCoMd_ / (refOmega * refOmega);
+    Eigen::Vector3d constantOmegaDCM = comError + comdError / refOmega;
+    blCons.segment(curRow, curHeight) = constantOmegaDCM;
+    buCons.segment(curRow, curHeight) = constantOmegaDCM;
+
+    curRow += curHeight;
+    curHeight = 1;
+    C(curRow, 3) = refOmega * (1 + vrpGain);
+    C(curRow, 6) = -1.;
+    blCons[curRow] = 0.;
+    buCons[curRow] = 0.;
+
+    Eigen::Vector3d refFrameZMP = zmpFrame_.rotation() * (pendulum_.zmp() - zmpFrame_.translation());
+
+    curRow += curHeight;
+    curHeight = zmpArea_.first.rows();
+    C.block(curRow, 4, curHeight, 2) = zmpArea_.first;
+    blCons.segment(curRow, curHeight).setConstant(-1e5);
+    buCons.segment(curRow, curHeight) = zmpArea_.second - zmpArea_.first * refFrameZMP;
+
+    curRow += curHeight;
+    curHeight = 1;
+    double dcmDamping = 0.5;
+    double alpha = (1 + dcmDamping) * refLambda * dt_ / refOmega;
+    C(curRow, 2) = 1 + alpha * (1 - vrpGain);
+    C(curRow, 9) = alpha;
+    blCons[curRow] = MIN_DCM_HEIGHT - refDCM.z();
+    buCons[curRow] = MAX_DCM_HEIGHT - refDCM.z();
+
+    curRow += curHeight;
+    if (curRow != nbConstraints)
+    {
+      LOG_ERROR("Invalid number of constraints in VHIP feedback QP");
+    }
+
     return sva::ForceVecd::Zero();
   }
 
@@ -725,12 +832,12 @@ namespace vhip_walking
 
     //Eigen::MatrixXd A0 = A; // A is modified by solve()
     //Eigen::VectorXd b0 = b; // b is modified by solve()
-    bool solverSuccess = wrenchSolver_.solve(A, b, C, bl, bu);
-    Eigen::VectorXd x = wrenchSolver_.result();
+    bool solverSuccess = leastSquares_.solve(A, b, C, bl, bu);
+    Eigen::VectorXd x = leastSquares_.result();
     if (!solverSuccess)
     {
       LOG_ERROR("DS force distribution QP failed to run");
-      wrenchSolver_.print_inform();
+      leastSquares_.print_inform();
       return;
     }
 
@@ -779,12 +886,12 @@ namespace vhip_walking
 
     //Eigen::MatrixXd A0 = A; // A is modified by solve()
     //Eigen::VectorXd b0 = b; // b is modified by solve()
-    wrenchSolver_.solve(A, b, C, bl, bu);
-    Eigen::VectorXd x = wrenchSolver_.result();
-    if (wrenchSolver_.inform() != Eigen::lssol::eStatus::STRONG_MINIMUM)
+    leastSquares_.solve(A, b, C, bl, bu);
+    Eigen::VectorXd x = leastSquares_.result();
+    if (leastSquares_.inform() != Eigen::lssol::eStatus::STRONG_MINIMUM)
     {
       LOG_ERROR("SS force distribution QP failed to run");
-      wrenchSolver_.print_inform();
+      leastSquares_.print_inform();
       return;
     }
 

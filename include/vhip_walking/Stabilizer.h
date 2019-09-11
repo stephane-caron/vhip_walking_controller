@@ -410,7 +410,7 @@ namespace vhip_walking
   private:
     ContactState contactState_ = ContactState::DoubleSupport;
     Eigen::HrepXd zmpArea_;
-    Eigen::LSSOL_LS wrenchSolver_; /**< Least-squares solver for wrench distribution */
+    Eigen::LSSOL_LS leastSquares_; /**< Least-squares solver for wrench distribution */
     Eigen::Matrix<double, 16, 6> wrenchFaceMatrix_;
     Eigen::Vector2d copAdmittance_ = Eigen::Vector2d::Zero();
     Eigen::Vector3d comAdmittance_ = Eigen::Vector3d::Zero();
