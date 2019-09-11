@@ -449,8 +449,7 @@ namespace vhip_walking
         },
         [this, FORCE_SCALE]() -> Eigen::Vector3d
         {
-          double lambda = std::pow(pendulum_.omega(), 2);
-          Eigen::Vector3d contactForce = controlRobot().mass() * lambda * (pendulum_.com() - pendulum_.zmp());
+          Eigen::Vector3d contactForce = controlRobot().mass() * (pendulum_.comdd() - world::gravity);
           return pendulum_.zmp() + FORCE_SCALE * contactForce;
         }),
       Point3D(
