@@ -21,8 +21,6 @@
 
 #include <chrono>
 
-#include <tvm/LinearizedControlProblem.h>
-
 #include <vhip_walking/Stabilizer.h>
 #include <vhip_walking/utils/clamp.h>
 
@@ -488,17 +486,50 @@ namespace vhip_walking
   {
     const sva::PTransformd & X_0_lc = leftFootContact.pose;
     const sva::PTransformd & X_0_rc = rightFootContact.pose;
-    switch (contactState_)
+    if (contactState_ == ContactState::DoubleSupport)
     {
-      case ContactState::DoubleSupport:
-        zmpFrame_ = sva::interpolate(X_0_lc, X_0_rc, 0.5);
-        break;
-      case ContactState::LeftFoot:
-        zmpFrame_ = X_0_lc;
-        break;
-      case ContactState::RightFoot:
-        zmpFrame_ = X_0_rc;
-        break;
+      zmpFrame_ = sva::interpolate(X_0_lc, X_0_rc, 0.5);
+      double xmin = std::min(leftFootContact.xmin(), rightFootContact.xmin());
+      double xmax = std::max(leftFootContact.xmax(), rightFootContact.xmax());
+      double ymin = std::min(leftFootContact.ymin(), rightFootContact.ymin());
+      double ymax = std::max(leftFootContact.ymax(), rightFootContact.ymax());
+      Eigen::Matrix<double, 4, 2> hrepMat;
+      Eigen::Matrix<double, 4, 1> hrepVec;
+      hrepMat <<
+        +1, 0,
+        -1, 0,
+        0, +1,
+        0, -1;
+      hrepVec <<
+        xmax - zmpFrame_.translation().x(),
+        zmpFrame_.translation().x() - xmin,
+        ymax - zmpFrame_.translation().y(),
+        zmpFrame_.translation().y() - ymin;
+      zmpPolygon_.clear();
+      zmpPolygon_.push_back(Eigen::Vector3d{xmax, ymax, zmpFrame_.translation().z()});
+      zmpPolygon_.push_back(Eigen::Vector3d{xmax, ymin, zmpFrame_.translation().z()});
+      zmpPolygon_.push_back(Eigen::Vector3d{xmin, ymin, zmpFrame_.translation().z()});
+      zmpPolygon_.push_back(Eigen::Vector3d{xmin, ymax, zmpFrame_.translation().z()});
+    }
+    else if (contactState_ == ContactState::LeftFoot)
+    {
+      zmpFrame_ = X_0_lc;
+      zmpArea_ = leftFootContact.localHrep();
+      zmpPolygon_.clear();
+      zmpPolygon_.push_back(leftFootContact.vertex0());
+      zmpPolygon_.push_back(leftFootContact.vertex1());
+      zmpPolygon_.push_back(leftFootContact.vertex2());
+      zmpPolygon_.push_back(leftFootContact.vertex3());
+    }
+    else // (contactState_ == ContactState::RightFoot)
+    {
+      zmpFrame_ = X_0_rc;
+      zmpArea_ = rightFootContact.localHrep();
+      zmpPolygon_.clear();
+      zmpPolygon_.push_back(rightFootContact.vertex0());
+      zmpPolygon_.push_back(rightFootContact.vertex1());
+      zmpPolygon_.push_back(rightFootContact.vertex2());
+      zmpPolygon_.push_back(rightFootContact.vertex3());
     }
     measuredZMP_ = computeZMP(measuredWrench_);
   }
@@ -595,23 +626,12 @@ namespace vhip_walking
 
   sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
   {
-    using namespace tvm;
-
     double omega_d = pendulum_.omega();
-    double omega_sq = omega_d * omega_d;
-    Eigen::Vector3d Delta_com = measuredCoM_ - pendulum_.com();
-    Eigen::Vector3d Delta_comd = measuredCoMd_ - pendulum_.comd();
-
-    Space euclideanSpace(3);
-    Space phaseSpace(1);
-    Delta_omega = phaseSpace.createVariable("Delta_omega");
-
-    auto Delta_xi = std::make_shared<function::BasicLinearFunction>(
-        Matrix<double, 3, 1>(-pendulum_.comd() / (omega_d * omega_d)),
-        Delta_omega,
-        Delta_com + Delta_comd / omega_d);
-
-    dcmError_ = comError + comdError / omega;
+    double lambda_d = omega_d * omega_d;
+    Eigen::Vector3d comError = measuredCoM_ - pendulum_.com();
+    Eigen::Vector3d comdError = measuredCoMd_ - pendulum_.comd();
+    Eigen::Vector3d refVRP = pendulum_.zmp() - world::gravity / lambda_d;
+    dcmError_ = comError + comdError / omega_d;
     return sva::ForceVecd::Zero();
   }
 

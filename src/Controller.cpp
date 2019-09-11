@@ -330,6 +330,13 @@ namespace vhip_walking
           return footStepPolygon(targetContact());
         }),
       Polygon(
+        "ZMPSupportArea",
+        COLORS.at('r'),
+        [this]()
+        {
+          return stabilizer_.zmpPolygon();
+        }),
+      Polygon(
         "FootstepPlan",
         COLORS.at('b'),
         [this, footStepPolygon]()

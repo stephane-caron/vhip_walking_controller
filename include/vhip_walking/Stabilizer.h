@@ -264,6 +264,14 @@ namespace vhip_walking
       return computeZMP(distribWrench_);
     }
 
+    /** Vertices of the ZMP support polygon in the world frame.
+     *
+     */
+    const std::vector<Eigen::Vector3d> & zmpPolygon()
+    {
+      return zmpPolygon_;
+    }
+
   private:
     /** Weights for force distribution quadratic program (FDQP).
      *
@@ -401,6 +409,7 @@ namespace vhip_walking
 
   private:
     ContactState contactState_ = ContactState::DoubleSupport;
+    Eigen::HrepXd zmpArea_;
     Eigen::LSSOL_LS wrenchSolver_; /**< Least-squares solver for wrench distribution */
     Eigen::Matrix<double, 16, 6> wrenchFaceMatrix_;
     Eigen::Vector2d copAdmittance_ = Eigen::Vector2d::Zero();
@@ -453,6 +462,7 @@ namespace vhip_walking
     double vdcZPos_ = 0.;
     double vfcZCtrl_ = 0.;
     mc_rtc::Configuration config_; /**< Stabilizer configuration dictionary */
+    std::vector<Eigen::Vector3d> zmpPolygon_; /**< Vertices of the ZMP support polygon in the world frame */
     std::vector<std::string> comActiveJoints_; /**< Joints used by CoM IK task */
     sva::ForceVecd distribWrench_ = sva::ForceVecd::Zero();
     sva::ForceVecd measuredWrench_; /**< Measured net contact wrench in the world frame */

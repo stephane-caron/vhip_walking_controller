@@ -296,13 +296,13 @@ namespace vhip_walking
       return maxCoord<2>();
     }
 
-    /** Halfspace representation of contact area in world frame.
+    /** Halfspace representation of contact area in the contact frame.
      *
      */
-    Eigen::HrepXd hrep() const
+    Eigen::HrepXd localHrep() const
     {
-      Eigen::Matrix<double, 4, 2> localHrepMat, worldHrepMat;
-      Eigen::Matrix<double, 4, 1> localHrepVec, worldHrepVec;
+      Eigen::Matrix<double, 4, 2> localHrepMat;
+      Eigen::Matrix<double, 4, 1> localHrepVec;
       localHrepMat <<
         +1, 0,
         -1, 0,
@@ -313,6 +313,19 @@ namespace vhip_walking
         halfLength,
         halfWidth,
         halfWidth;
+      return Eigen::HrepXd(localHrepMat, localHrepVec);
+    }
+
+    /** Halfspace representation of contact area in the world frame.
+     *
+     */
+    Eigen::HrepXd hrep() const
+    {
+      Eigen::Matrix<double, 4, 2> worldHrepMat;
+      Eigen::Matrix<double, 4, 1> worldHrepVec;
+      Eigen::HrepXd local = localHrep();
+      auto & localHrepMat = local.first;
+      auto & localHrepVec = local.second;
       if ((normal() - world::e_z).norm() > 1e-3)
       {
         LOG_WARNING("Contact is not horizontal");
