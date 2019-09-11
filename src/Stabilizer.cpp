@@ -360,22 +360,22 @@ namespace vhip_walking
 
     Eigen::Vector3d staticForce = -mass_ * world::gravity;
 
-    altccCoMAccel_ = 0.;
-    altccCoMOffset_ = 0.;
-    altccCoMVel_ = 0.;
-    altccError_ = 0.;
-    comOffset_ = Eigen::Vector3d::Zero();
-    dcmAverageError_ = Eigen::Vector3d::Zero();
-    dcmError_ = Eigen::Vector3d::Zero();
+    altccCoMAccel_.setZero();
+    altccCoMOffset_.setZero();
+    altccCoMVel_.setZero();
+    altccError_.setZero();
+    comOffset_.setZero();
+    dcmAverageError_.setZero();
+    dcmError_.setZero();
     distribWrench_ = {pendulum_.com().cross(staticForce), staticForce};
     logMeasuredDFz_ = 0.;
     logMeasuredSTz_ = 0.;
     logTargetDFz_ = 0.;
     logTargetSTz_ = 0.;
-    zmpccCoMAccel_ = Eigen::Vector3d::Zero();
-    zmpccCoMOffset_ = Eigen::Vector3d::Zero();
-    zmpccCoMVel_ = Eigen::Vector3d::Zero();
-    zmpccError_ = Eigen::Vector3d::Zero();
+    zmpccCoMAccel_.setZero();
+    zmpccCoMOffset_.setZero();
+    zmpccCoMVel_.setZero();
+    zmpccError_.setZero();
   }
 
   void Stabilizer::checkGains()
@@ -977,14 +977,15 @@ namespace vhip_walking
     measuredLambda_ = measuredWrench_.force().z() / (mass_ * measuredHeight);
     if (model_ == TemplateModel::LinearInvertedPendulum)
     {
-      altccIntegrator_.add(0., dt_);
-      altccCoMAccel_ = 0.;
-      altccCoMVel_ = 0.;
+      altccIntegrator_.add(Eigen::Vector3d::Zero(), dt_); // leak to zero
+      altccCoMAccel_.setZero();
+      altccCoMVel_.setZero();
     }
     else
     {
-      double newVel = comAdmittance_.z() * (distribLambda_ - measuredLambda_);
-      double newAccel = (newVel - altccCoMVel_) / dt_;
+      double newVelZ = comAdmittance_.z() * (distribLambda_ - measuredLambda_);
+      Eigen::Vector3d newVel = newVelZ * world::e_z;
+      Eigen::Vector3d newAccel = (newVel - altccCoMVel_) / dt_;
       altccIntegrator_.add(newVel, dt_);
       altccCoMAccel_ = newAccel;
       altccCoMVel_ = newVel;
@@ -997,9 +998,9 @@ namespace vhip_walking
     updateCoMZMPCC();
     updateCoMAltitude();
 
-    comOffset_ = zmpccCoMOffset_ + altccCoMOffset_ * world::e_z;
-    auto comVelOffset = zmpccCoMVel_ + altccCoMVel_ * world::e_z;
-    auto comAccelOffset = zmpccCoMAccel_ + altccCoMAccel_ * world::e_z;
+    comOffset_ = zmpccCoMOffset_ + altccCoMOffset_;
+    auto comVelOffset = zmpccCoMVel_ + altccCoMVel_;
+    auto comAccelOffset = zmpccCoMAccel_ + altccCoMAccel_;
     comTask->com(pendulum_.com() + comOffset_);
     comTask->refVel(pendulum_.comd() + comVelOffset);
     comTask->refAccel(pendulum_.comdd() + comAccelOffset);

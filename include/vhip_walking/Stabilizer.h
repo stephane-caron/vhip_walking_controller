@@ -428,6 +428,10 @@ namespace vhip_walking
     Eigen::LSSOL_LS leastSquares_; /**< Least-squares solver for wrench distribution */
     Eigen::Matrix<double, 16, 6> wrenchFaceMatrix_;
     Eigen::Vector2d copAdmittance_ = Eigen::Vector2d::Zero();
+    Eigen::Vector3d altccCoMAccel_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d altccCoMOffset_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d altccCoMVel_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d altccError_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d comAdmittance_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d comOffset_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d comStiffness_ = {1000., 1000., 100.}; /**< Stiffness of CoM IK task */
@@ -444,17 +448,13 @@ namespace vhip_walking
     Eigen::Vector3d zmpccError_ = Eigen::Vector3d::Zero();
     ExponentialMovingAverage dcmIntegrator_;
     FDQPWeights fdqpWeights_;
+    LeakyIntegrator<Eigen::Vector3d> altccIntegrator_;
     LeakyIntegrator<Eigen::Vector3d> zmpccIntegrator_;
-    LeakyIntegrator<double> altccIntegrator_;
     TemplateModel model_ = TemplateModel::VariableHeightInvertedPendulum;
     bool inTheAir_ = false; /**< Is the robot in the air? */
     bool zmpccOnlyDS_ = true; /**< Apply ZMPCC only during double support phases? */
     const Pendulum & pendulum_; /**< Reference to desired template model state */
     const mc_rbdyn::Robot & controlRobot_; /**< Control robot model (input to joint position controllers) */
-    double altccCoMAccel_ = 0.;
-    double altccCoMOffset_ = 0.;
-    double altccCoMVel_ = 0.;
-    double altccError_ = 0.;
     double comWeight_ = 1000.; /**< Weight of CoM IK task */
     double contactWeight_ = 100000.; /**< Weight of contact IK tasks */
     double dcmGain_ = 1.25; /**< Proportional gain \f$k > 1\f$ such that \f$\Delta r = k \Delta \xi \Leftrightarrow \Delta\xi = \omega (1 - k) \Delta \xi\f$ */
