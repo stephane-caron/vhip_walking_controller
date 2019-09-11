@@ -69,7 +69,14 @@ namespace vhip_walking
        */
       void hideStartStandingButton();
 
+      /** Estimate robot mass from force sensor measurements.
+       *
+       */
+      void weighRobot();
+
     private:
+      AvgStdEstimator massEstimator_;
+      bool isWeighing_;
       bool postureTaskIsActive_;
       bool postureTaskWasActive_;
       bool startStandingButton_;

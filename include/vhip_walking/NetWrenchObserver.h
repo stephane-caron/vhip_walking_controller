@@ -63,7 +63,7 @@ namespace vhip_walking
     /** Net contact wrench in the world frame.
      *
      */
-    const sva::ForceVecd & wrench()
+    const sva::ForceVecd & wrench() const
     {
       return netWrench_;
     }
@@ -71,7 +71,7 @@ namespace vhip_walking
     /** Zero-tilting moment point in the latest contact frame.
      *
      */
-    const Eigen::Vector3d & zmp()
+    const Eigen::Vector3d & zmp() const
     {
       return netZMP_;
     }

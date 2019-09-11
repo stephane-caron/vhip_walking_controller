@@ -27,6 +27,7 @@ namespace vhip_walking
   {
     auto & ctl = controller();
 
+    isWeighing_ = true;
     postureTaskIsActive_ = true;
     postureTaskWasActive_ = true;
     startStandingButton_ = false;
@@ -68,10 +69,11 @@ namespace vhip_walking
       ctl.internalReset();
       postureTaskWasActive_ = false;
     }
-    else
+    else if (!isWeighing_)
     {
       showStartStandingButton();
     }
+    weighRobot();
   }
 
   bool states::Initial::checkTransitions()
@@ -104,6 +106,39 @@ namespace vhip_walking
     {
       gui()->removeElement({"Walking", "Controller"}, "Start standing");
       startStandingButton_ = false;
+    }
+  }
+
+  void states::Initial::weighRobot()
+  {
+    constexpr double MIN_GROUND_FORCE = 50.; // [N]
+    constexpr double MAX_MASS_RELVAR = 0.2;
+
+    auto & ctl = controller();
+    double Fz = ctl.netWrenchObs().wrench().force().z();
+    if (Fz < MIN_GROUND_FORCE)
+    {
+      return;
+    }
+    massEstimator_.add(Fz / world::GRAVITY);
+    if (massEstimator_.n() < 100)
+    {
+      return;
+    }
+
+    double minRobotMass = (1. - MAX_MASS_RELVAR) * ctl.controlRobot().mass();
+    double maxRobotMass = (1. + MAX_MASS_RELVAR) * ctl.controlRobot().mass();
+    if (minRobotMass < massEstimator_.avg() && massEstimator_.avg() < maxRobotMass)
+    {
+      isWeighing_ = false;
+      ctl.stabilizer().updateMass(massEstimator_.avg());
+    }
+    else
+    {
+      LOG_WARNING("Estimated mass " << massEstimator_.avg() << " [kg] "
+          << "too far away from model mass " << ctl.controlRobot().mass() << " [kg]");
+      isWeighing_ = true;
+      hideStartStandingButton();
     }
   }
 }

@@ -242,6 +242,14 @@ namespace vhip_walking
       return mpc_;
     }
 
+    /** Net contact wrench observer.
+     *
+     */
+    const NetWrenchObserver & netWrenchObs()
+    {
+      return netWrenchObs_;
+    }
+
     /** Get next contact in plan.
      *
      */

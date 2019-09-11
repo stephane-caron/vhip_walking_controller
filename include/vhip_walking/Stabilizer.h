@@ -210,6 +210,14 @@ namespace vhip_walking
       contactState_ = contactState;
     }
 
+    /** Set robot mass.
+     *
+     */
+    void updateMass(double mass)
+    {
+      mass_ = mass;
+    }
+
     /** Update real-robot state.
      *
      * \param com Position of the center of mass.
