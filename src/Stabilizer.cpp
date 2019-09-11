@@ -985,8 +985,12 @@ namespace vhip_walking
     }
     else
     {
-      double newVelZ = comAdmittance_.z() * (distribLambda_ - measuredLambda_);
-      Eigen::Vector3d newVel = newVelZ * world::e_z;
+      const Eigen::Matrix3d & R_0_imu = controlRobot_.bodySensor().orientation().toRotationMatrix();
+      const Eigen::Matrix3d & R_0_base = controlRobot_.posW().rotation();
+      Eigen::Matrix3d R_base_imu = R_0_imu * R_0_base.transpose();
+      Eigen::Vector3d worldVertical = R_base_imu.col(2);
+      double zd = comAdmittance_.z() * (distribLambda_ - measuredLambda_);
+      Eigen::Vector3d newVel = zd * worldVertical;
       Eigen::Vector3d newAccel = (newVel - altccCoMVel_) / dt_;
       altccIntegrator_.add(newVel, dt_);
       altccCoMAccel_ = newAccel;
