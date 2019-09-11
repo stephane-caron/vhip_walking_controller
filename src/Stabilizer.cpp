@@ -622,10 +622,10 @@ namespace vhip_walking
       dcmAverageError_ = dcmIntegrator_.eval();
     }
 
-    desiredCoMAccel_ = pendulum_.comdd();
-    desiredCoMAccel_ += dcmGain_ * omega2 * dcmError_ + omega * comdError;
-    desiredCoMAccel_ += dcmIntegralGain_ * omega2 * dcmAverageError_;
-    auto desiredForce = mass_ * (desiredCoMAccel_ - world::gravity);
+    Eigen::Vector3d desiredCoMAccel = pendulum_.comdd();
+    desiredCoMAccel += dcmGain_ * omega2 * dcmError_ + omega * comdError;
+    desiredCoMAccel += dcmIntegralGain_ * omega2 * dcmAverageError_;
+    auto desiredForce = mass_ * (desiredCoMAccel - world::gravity);
     return {pendulum_.com().cross(desiredForce), desiredForce};
   }
 
