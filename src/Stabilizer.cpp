@@ -113,7 +113,9 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_fdqp_weights_pressure", [this]() { return std::pow(fdqpWeights_.pressureSqrt, 2); });
     logger.addLogEntry("stabilizer_integrator_timeConstant", [this]() { return dcmIntegrator_.timeConstant(); });
     logger.addLogEntry("stabilizer_lambda_distrib", [this]() { return distribLambda_; });
+    logger.addLogEntry("stabilizer_lambda_max", [this]() { return lambdaMax_; });
     logger.addLogEntry("stabilizer_lambda_measured", [this]() { return measuredLambda_; });
+    logger.addLogEntry("stabilizer_lambda_min", [this]() { return lambdaMin_; });
     logger.addLogEntry("stabilizer_vdc_damping", [this]() { return vdcDamping_; });
     logger.addLogEntry("stabilizer_vdc_frequency", [this]() { return vdcFrequency_; });
     logger.addLogEntry("stabilizer_vdc_stiffness", [this]() { return vdcStiffness_; });
@@ -632,10 +634,10 @@ namespace vhip_walking
     constexpr double MIN_FORCE = 1.; // [N]
 
     double measuredHeight = measuredCoM_.z() - zmpFrame_.translation().z();
-    double lambdaMax = MAX_FORCE / (mass_ * measuredHeight);
-    double lambdaMin = MIN_FORCE / (mass_ * measuredHeight);
-    double omegaMax = std::sqrt(lambdaMax);
-    double omegaMin = std::sqrt(lambdaMin);
+    lambdaMax_ = MAX_FORCE / (mass_ * measuredHeight);
+    lambdaMin_ = MIN_FORCE / (mass_ * measuredHeight);
+    double omegaMax = std::sqrt(lambdaMax_);
+    double omegaMin = std::sqrt(lambdaMin_);
 
     constexpr unsigned NB_VARIABLES = 3 + 1 + 2 + 1 + 3;
     Eigen::MatrixXd A;
@@ -660,7 +662,7 @@ namespace vhip_walking
       omegaMin - refOmega, // refOmega + Delta_omega >= omegaMin
       -1., // 4: Delta zmp_x [m]
       -1., // 5: Delta zmp_y [m]
-      lambdaMin - refLambda, // refLambda + Delta_lambda >= lambdaMin 
+      lambdaMin_ - refLambda, // refLambda + Delta_lambda >= lambdaMin_
       -1., // 7: Delta sigma_x [m]
       -1., // 8: Delta sigma_y [m]
       -1.; // 9: Delta sigma_z [m]
@@ -671,7 +673,7 @@ namespace vhip_walking
       omegaMax - refOmega, // refOmega + Delta_omega <= omegaMax
       +1., // 4: Delta zmp_x [m]
       +1., // 5: Delta zmp_y [m]
-      lambdaMax - refLambda, // refLambda + Delta_lambda <= lambdaMax
+      lambdaMax_ - refLambda, // refLambda + Delta_lambda <= lambdaMax_
       +1., // 7: Delta sigma_x [m]
       +1., // 8: Delta sigma_y [m]
       +1.; // 9: Delta sigma_z [m]

@@ -463,6 +463,8 @@ namespace vhip_walking
     double distribLambda_ = 0.; /**< Normalized stiffness required by FDQP */
     double dt_ = 0.005; /**< Controller cycle in [s] */
     double fdqpRunTime_ = 0.; /**< Measured average duration in [s] of a call to distributeWrench() */
+    double lambdaMax_ = 30.;
+    double lambdaMin_ = 0.;
     double leftFootRatio_ = 0.5; /**< Desired ratio of total normal foot force applied to left foot */
     double logMeasuredDFz_ = 0.; /**< Measured vertical force difference between left and right foot */
     double logMeasuredSTz_ = 0.; /**< Model vertical position average between left and right foot */
