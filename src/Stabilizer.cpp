@@ -121,6 +121,11 @@ namespace vhip_walking
     logger.addLogEntry("stabilizer_vfc_stz_measured", [this]() { return logMeasuredSTz_; });
     logger.addLogEntry("stabilizer_vfc_stz_target", [this]() { return logTargetSTz_; });
     logger.addLogEntry("stabilizer_vfc_z_ctrl", [this]() { return vfcZCtrl_; });
+    logger.addLogEntry("stabilizer_vhip_dcm", [this]() { return vhipDCM_; });
+    logger.addLogEntry("stabilizer_vhip_lambda", [this]() { return vhipLambda_; });
+    logger.addLogEntry("stabilizer_vhip_omega", [this]() { return vhipOmega_; });
+    logger.addLogEntry("stabilizer_vhip_omega2", [this]() { return std::pow(vhipOmega_, 2); });
+    logger.addLogEntry("stabilizer_vhip_zmp", [this]() { return vhipZMP_; });
     logger.addLogEntry("stabilizer_zmp", [this]() { return zmp(); });
     logger.addLogEntry("stabilizer_zmpcc_comAccel", [this]() { return zmpccCoMAccel_; });
     logger.addLogEntry("stabilizer_zmpcc_comOffset", [this]() { return zmpccCoMOffset_; });
@@ -631,6 +636,7 @@ namespace vhip_walking
     double refLambda = refOmega * refOmega;
     Eigen::Vector3d comError = measuredCoM_ - pendulum_.com();
     Eigen::Vector3d comdError = measuredCoMd_ - pendulum_.comd();
+    Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d refDCM = pendulum_.com() + pendulum_.comd() / refOmega;
     Eigen::Vector3d refVRP = pendulum_.zmp() - world::gravity / refLambda;
     const Eigen::Vector3d & refZMP = pendulum_.zmp();
@@ -668,8 +674,8 @@ namespace vhip_walking
       -1., // 1: Delta xi_y [m]
       -1., // 2: Delta xi_z [m]
       omegaMin - refOmega, // refOmega + Delta_omega >= omegaMin
-      -1., // 4: Delta r_x [m]
-      -1., // 5: Delta r_y [m]
+      -1., // 4: Delta zmp_x [m]
+      -1., // 5: Delta zmp_y [m]
       lambdaMin - refLambda, // refLambda + Delta_lambda >= lambdaMin 
       -1., // 7: Delta sigma_x [m]
       -1., // 8: Delta sigma_y [m]
@@ -679,8 +685,8 @@ namespace vhip_walking
       +1., // 1: Delta xi_y [m]
       +1., // 2: Delta xi_z [m]
       omegaMax - refOmega, // refOmega + Delta_omega <= omegaMax
-      +1., // 4: Delta r_x [m]
-      +1., // 5: Delta r_y [m]
+      +1., // 4: Delta zmp_x [m]
+      +1., // 5: Delta zmp_y [m]
       lambdaMax - refLambda, // refLambda + Delta_lambda <= lambdaMax
       +1., // 7: Delta sigma_x [m]
       +1., // 8: Delta sigma_y [m]
@@ -691,11 +697,14 @@ namespace vhip_walking
     Eigen::MatrixXd C;
     C.setZero(nbConstraints, NB_VARIABLES);
 
+    const Eigen::Matrix3d R_zmpFrame_0 = zmpFrame_.rotation().transpose();
+    const Eigen::Matrix<double, 3, 2> R_Delta_zmp = R_zmpFrame_0.block<3, 2>(0, 0);
+
     unsigned curRow = 0;
     unsigned curHeight = 3;
     C.block(curRow, 0, curHeight, 3) = -vrpGain * Eigen::Matrix3d::Identity();
     C.block(curRow, 3, curHeight, 1) = (refDCM - refVRP) / refOmega;
-    C.block(curRow, 4, curHeight, 2) = zmpFrame_.rotation().block<3, 2>(0, 0);
+    C.block(curRow, 4, curHeight, 2) = R_Delta_zmp;
     C.block(curRow, 6, curHeight, 1) = (refZMP - refDCM) / refLambda;
     C.block(curRow, 7, curHeight, 3) = Eigen::Matrix3d::Identity();
     blCons.segment(curRow, curHeight).setZero();
@@ -717,6 +726,10 @@ namespace vhip_walking
     buCons[curRow] = 0.;
 
     Eigen::Vector3d refFrameZMP = zmpFrame_.rotation() * (pendulum_.zmp() - zmpFrame_.translation());
+    if (std::abs(refFrameZMP.z()) > 1e-3)
+    {
+      LOG_WARNING("Reference ZMP does not belong to the ZMP frame");
+    }
 
     curRow += curHeight;
     curHeight = zmpArea_.first.rows();
@@ -739,7 +752,26 @@ namespace vhip_walking
       LOG_ERROR("Invalid number of constraints in VHIP feedback QP");
     }
 
-    return sva::ForceVecd::Zero();
+    bool solverSuccess = leastSquares_.solve(A, b, C, bl, bu);
+    Eigen::VectorXd Delta_x = leastSquares_.result();
+    if (!solverSuccess)
+    {
+      LOG_ERROR("VHIP feedback QP failed to run");
+      leastSquares_.print_inform();
+      return computeLIPDesiredWrench();
+    }
+
+    double Delta_omega = Delta_x[3];
+    double Delta_lambda = Delta_x[6];
+    Eigen::Vector2d Delta_zmp = Delta_x.segment<2>(4);
+
+    vhipOmega_ = refOmega + Delta_omega;
+    vhipLambda_ = refLambda + Delta_lambda;
+    vhipDCM_ = measuredCoM_ + measuredCoMd_ / vhipOmega_;
+    vhipZMP_ = refZMP + R_Delta_zmp * Delta_zmp;
+
+    Eigen::Vector3d desiredForce = mass_ * vhipLambda_ * (refCoM - vhipZMP_);
+    return {vhipZMP_.cross(desiredForce), desiredForce};
   }
 
   void Stabilizer::distributeWrench(const sva::ForceVecd & desiredWrench)

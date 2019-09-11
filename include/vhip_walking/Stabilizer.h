@@ -422,6 +422,8 @@ namespace vhip_walking
     Eigen::Vector3d measuredCoM_;
     Eigen::Vector3d measuredCoMd_;
     Eigen::Vector3d measuredZMP_;
+    Eigen::Vector3d vhipDCM_;
+    Eigen::Vector3d vhipZMP_;
     Eigen::Vector3d zmpccCoMAccel_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMOffset_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d zmpccCoMVel_ = Eigen::Vector3d::Zero();
@@ -461,6 +463,8 @@ namespace vhip_walking
     double vdcStiffness_ = 1000.; /**< Vertical Drift Compensation stiffness */
     double vdcZPos_ = 0.;
     double vfcZCtrl_ = 0.;
+    double vhipLambda_ = 0.;
+    double vhipOmega_ = 0.;
     mc_rtc::Configuration config_; /**< Stabilizer configuration dictionary */
     std::vector<Eigen::Vector3d> zmpPolygon_; /**< Vertices of the ZMP support polygon in the world frame */
     std::vector<std::string> comActiveJoints_; /**< Joints used by CoM IK task */
