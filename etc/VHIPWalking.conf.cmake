@@ -20,7 +20,7 @@
     "dcm_feedback":
     {
       "gain": 1.4,
-      "integral_gain": 2.8,
+      "integral_gain": 0.0,
       "integrator_time_constant": 20.0
     },
     "tasks":
@@ -50,7 +50,7 @@
     },
     "altcc":
     {
-      "integrator_leak_rate": 0.01
+      "integrator_leak_rate": 0.1
     },
     "zmpcc":
     {
@@ -82,7 +82,7 @@
     {
       "admittance":
       {
-        "com": [0.1, 0.5, 0.005],
+        "com": [0.0, 0.0, 0.02],
         "cop": [0.01, 0.01],
         "dfz": 0.0001
       },
