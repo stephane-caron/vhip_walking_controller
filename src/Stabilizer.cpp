@@ -595,6 +595,23 @@ namespace vhip_walking
 
   sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
   {
+    using namespace tvm;
+
+    double omega_d = pendulum_.omega();
+    double omega_sq = omega_d * omega_d;
+    Eigen::Vector3d Delta_com = measuredCoM_ - pendulum_.com();
+    Eigen::Vector3d Delta_comd = measuredCoMd_ - pendulum_.comd();
+
+    Space euclideanSpace(3);
+    Space phaseSpace(1);
+    Delta_omega = phaseSpace.createVariable("Delta_omega");
+
+    auto Delta_xi = std::make_shared<function::BasicLinearFunction>(
+        Matrix<double, 3, 1>(-pendulum_.comd() / (omega_d * omega_d)),
+        Delta_omega,
+        Delta_com + Delta_comd / omega_d);
+
+    dcmError_ = comError + comdError / omega;
     return sva::ForceVecd::Zero();
   }
 
