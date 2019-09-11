@@ -636,7 +636,6 @@ namespace vhip_walking
     double refLambda = refOmega * refOmega;
     Eigen::Vector3d comError = measuredCoM_ - pendulum_.com();
     Eigen::Vector3d comdError = measuredCoMd_ - pendulum_.comd();
-    Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d refDCM = pendulum_.com() + pendulum_.comd() / refOmega;
     Eigen::Vector3d refVRP = pendulum_.zmp() - world::gravity / refLambda;
     const Eigen::Vector3d & refZMP = pendulum_.zmp();
@@ -770,6 +769,7 @@ namespace vhip_walking
     vhipDCM_ = measuredCoM_ + measuredCoMd_ / vhipOmega_;
     vhipZMP_ = refZMP + R_Delta_zmp * Delta_zmp;
 
+    Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d desiredForce = mass_ * vhipLambda_ * (refCoM - vhipZMP_);
     return {vhipZMP_.cross(desiredForce), desiredForce};
   }
@@ -869,7 +869,6 @@ namespace vhip_walking
     if (!solverSuccess)
     {
       LOG_ERROR("DS force distribution QP failed to run");
-      leastSquares_.print_inform();
       return;
     }
 
@@ -923,7 +922,6 @@ namespace vhip_walking
     if (leastSquares_.inform() != Eigen::lssol::eStatus::STRONG_MINIMUM)
     {
       LOG_ERROR("SS force distribution QP failed to run");
-      leastSquares_.print_inform();
       return;
     }
 
