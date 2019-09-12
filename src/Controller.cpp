@@ -109,6 +109,11 @@ namespace vhip_walking
     config("stabilizer")("tasks")("com").add("active_joints", comActiveJoints);
     stabilizer_.configure(config("stabilizer"));
 
+    if (robotConfig.has("force_calib"))
+    {
+      netWrenchObs_.forceCalib(robotConfig("force_calib"));
+    }
+
     loadFootstepPlan(initialPlan);
     stabilizer_.reset(robots());
     stabilizer_.wrenchFaceMatrix(sole_);

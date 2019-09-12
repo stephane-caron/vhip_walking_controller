@@ -97,6 +97,7 @@
         "max_height": 0.85,
         "min_height": 0.55
       },
+      "force_calib": [0.5, 3.7],
       "sole":
       {
         "half_length": 0.112,

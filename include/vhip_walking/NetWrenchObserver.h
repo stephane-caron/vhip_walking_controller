@@ -82,8 +82,8 @@ namespace vhip_walking
     void forceCalib(const Eigen::Vector2d & calib)
     {
       forceCalib_ = calib;
-      clampInPlace(forceCalib_.x(), -2., +2., "Force calib KTx");
-      clampInPlace(forceCalib_.y(), -5., +5., "Force calib KTy");
+      clampInPlace(forceCalib_.x(), -2., +2., "Normal force calib KTx");
+      clampInPlace(forceCalib_.y(), -5., +5., "Normal force calib KTy");
     }
 
     /** Raw contact wrench in the world frame before applying calibration data.
