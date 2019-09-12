@@ -33,21 +33,22 @@ namespace vhip_walking
   {
   }
 
-  void NetWrenchObserver::update(const mc_rbdyn::Robot & robot, const Contact & contact)
+  void NetWrenchObserver::update(const mc_rbdyn::Robot & realRobot, const Contact & contact)
   {
-    updateNetWrench(robot);
+    updateNetWrench(realRobot);
     updateNetZMP(contact);
   }
 
-  void NetWrenchObserver::updateNetWrench(const mc_rbdyn::Robot & robot)
+  void NetWrenchObserver::updateNetWrench(const mc_rbdyn::Robot & realRobot)
   {
     netWrench_ = sva::ForceVecd::Zero();
     for (std::string sensorName : sensorNames_)
     {
-      const auto & sensor = robot.forceSensor(sensorName);
+      const auto & sensor = realRobot.forceSensor(sensorName);
       if (sensor.force().z() > 1.) // pressure is more than 1 [N]
       {
-        netWrench_ += sensor.worldWrench(robot);
+        // map sensor wrench to inertial frame using realRobot observer
+        netWrench_ += sensor.worldWrench(realRobot);
       }
     }
   }
