@@ -81,6 +81,10 @@ namespace vhip_walking
         Button(
           "Reset",
           [this]() { reset(); }),
+        Checkbox(
+          "Pause",
+          [this]() { return paused_; },
+          [this]() { paused_ = !paused_; }),
         NumberInput(
           "Rate",
           [this]() { return rate(); },
@@ -89,6 +93,15 @@ namespace vhip_walking
           "Data",
           {"Fz", "Tx", "Ty"},
           [this]() -> Eigen::Vector3d { return {y_, x_[0], x_[1]}; }),
+        ArrayInput(
+          "Theta",
+          {"Tx", "Ty", "1"},
+          [this]() { return thetaAvg(); },
+          [this](const Eigen::Vector3d & theta)
+          {
+            thetaSum_ = nbSamples_ * theta;
+            theta_ = theta;
+          }),
         Label(
           "Sample size",
           [this]() { return nbSamples_; }),
@@ -170,8 +183,7 @@ namespace vhip_walking
      */
     double estimate(double Fz, double Tx, double Ty)
     {
-      Eigen::Vector3d thetaAvg = thetaSum_ / nbSamples_;
-      return Fz - thetaAvg[0] * Tx - thetaAvg[1] * Ty;
+      return Fz - thetaAvg().dot(Eigen::Vector3d{Tx, Ty, 0.});
     }
   
     /** Update estimation from new measurements. These measurements are supposed
@@ -197,25 +209,26 @@ namespace vhip_walking
         theta_[1] = 0.;
         theta_[2] = Fz;
       }
-      else // (nbSamples_ > 0)
+      else if (!paused_) // (nbSamples_ > 0)
       {
         double discount = std::pow(nbSamples_, -rate_);
-        LOG_INFO("\n=======");
-        LOG_INFO("theta = " << theta_.transpose());
-        LOG_INFO("y = " << y_);
-        LOG_INFO("x = " << x_.transpose());
-        LOG_INFO("residual = " << (y_ - x_.dot(theta_)));
-        LOG_INFO("dtheta = " << (discount * (y_ - x_.dot(theta_)) * x_));
         theta_ += discount * (y_ - x_.dot(theta_)) * x_;
+        theta_.x() = std::min(20., std::max(-20., theta_.x()));
+        theta_.y() = std::min(20., std::max(-20., theta_.y()));
+        theta_.z() = std::min(500., std::max(100., theta_.z()));
       }
       y_ = Fz;
-      x_[0] = Tx;
-      x_[1] = Ty;
-      //x_[2] = 1.;
-      thetaSum_ += theta_;
+      x_ = {Tx, Ty, 1.};
       nbSamples_++;
+      thetaSum_ += theta_;
     }
   
+  private:
+    Eigen::Vector3d thetaAvg()
+    {
+      return thetaSum_ / nbSamples_;
+    }
+
   private:
     Eigen::Vector3d thetaSum_;
     Eigen::Vector3d theta_; /**< Internal estimation parameters */
@@ -223,5 +236,6 @@ namespace vhip_walking
     double rate_; /**< Learning rate */
     double y_; /**< Vector of observations Fz */
     unsigned nbSamples_; /**< Number of calls to update() */
+    bool paused_ = false;
   };
 }
