@@ -197,7 +197,7 @@ namespace vhip_walking
     /** Get contact state.
      *
      */
-    ContactState contactState()
+    ContactState contactState() const
     {
       return contactState_;
     }

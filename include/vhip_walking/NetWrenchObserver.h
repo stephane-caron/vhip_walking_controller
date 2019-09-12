@@ -23,8 +23,8 @@
 
 #include <SpaceVecAlg/SpaceVecAlg>
 
-#include <vhip_walking/Pendulum.h>
 #include <vhip_walking/Contact.h>
+#include <vhip_walking/Pendulum.h>
 #include <vhip_walking/defs.h>
 
 namespace vhip_walking
@@ -55,10 +55,35 @@ namespace vhip_walking
 
     /** Update estimates based on the sensed net contact wrench.
      *
+     * \param realRobot Kinematic observer for actual robot.
+     *
      * \param contact Support contact frame.
      *
      */
-    void update(const mc_rbdyn::Robot & robot, const Contact & contact);
+    void update(const mc_rbdyn::Robot & realRobot, const Contact & contact);
+
+    /** TODO: to be merged with Stabilizer's ZMP frame.
+     *
+     */
+    void updateAnchorFrame(ContactState contactState, const mc_rbdyn::Robot & controlRobot);
+
+    /** Get force calibration data.
+     *
+     */
+    const Eigen::Vector2d & forceCalib() const
+    {
+      return forceCalib_;
+    }
+
+    /** Set force calibration data.
+     *
+     */
+    void forceCalib(const Eigen::Vector2d & calib)
+    {
+      forceCalib_ = calib;
+      clampInPlace(force_Calib.x(), -2., +2., "Force calib KTx");
+      clampInPlace(force_Calib.y(), -2., +2., "Force calib KTy");
+    }
 
     /** Net contact wrench in the world frame.
      *
@@ -92,8 +117,11 @@ namespace vhip_walking
     void updateNetZMP(const Contact & contact);
 
   private:
+    Eigen::Vector2d forceCalib_ = Eigen::Vector2d::Zero();
     Eigen::Vector3d netZMP_ = Eigen::Vector3d::Zero(); /**< Net wrench ZMP in the contact frame */
     std::vector<std::string> sensorNames_ = {"LeftFootForceSensor", "RightFootForceSensor"}; /**< List of force/torque sensor identifiers */
-    sva::ForceVecd netWrench_ = sva::ForceVecd::Zero(); /**< Net contact wrench in the world frame */
+    sva::ForceVecd netWrench_ = sva::ForceVecd::Zero(); /**< Corrected contact wrench in the world frame */
+    sva::ForceVecd rawWrench_ = sva::ForceVecd::Zero(); /**< Raw contact wrench in the world frame */
+    sva::PTransformd anchorFrame_ = sva::PTransformd::Identity();
   };
 }

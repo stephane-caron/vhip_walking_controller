@@ -137,7 +137,7 @@ namespace vhip_walking
       rate_ = std::min(0.95, std::max(0.05, rate));
     }
 
-    /** Polyak average.
+    /** Polyak average of fluctuating parameter estimates.
      *
      */
     Eigen::Vector3d thetaAvg() const

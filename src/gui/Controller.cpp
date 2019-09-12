@@ -39,6 +39,11 @@ namespace vhip_walking
       Button(
         "Reset",
         [this]() { this->resume("Initial"); }),
+      ArrayInput(
+        "Force calibration",
+        {"KTx", "KTy"},
+        [this]() { return netWrenchObs_.forceCalib(); },
+        [this](const Eigen::Vector2d & calib) { netWrenchObs_.forceCalib(calib); }),
       NumberInput(
         "Torso pitch [rad]",
         [this]() { return torsoPitch_; },

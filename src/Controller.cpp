@@ -267,6 +267,7 @@ namespace vhip_walking
     pelvisTask->orientation(pelvisOrientation_);
     torsoTask->orientation(mc_rbdyn::rpyToMat({0, torsoPitch_, 0}) * pelvisOrientation_);
 
+    netWrenchObs_.updateAnchorFrame(stabilizer_.contactState(), controlRobot());
     netWrenchObs_.update(realRobot(), supportContact());
     stabilizer_.updateState(realCom_, realComd_, netWrenchObs_.wrench(), leftFootRatio_);
 
