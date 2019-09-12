@@ -65,7 +65,7 @@ namespace vhip_walking
 
     /* Maximum gains for HRP4LIRMM in standing static equilibrium. */
     static constexpr double MAX_COM_XY_ADMITTANCE = 20.;
-    static constexpr double MAX_COM_Z_ADMITTANCE = 0.1;
+    static constexpr double MAX_COM_Z_ADMITTANCE = 0.01;
     static constexpr double MAX_COP_ADMITTANCE = 0.1;
     static constexpr double MAX_DCM_I_GAIN = 8.;
     static constexpr double MAX_DCM_P_GAIN = 3.;
