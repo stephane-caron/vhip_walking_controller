@@ -78,7 +78,7 @@ namespace vhip_walking
 
     /* Saturate integrator in case of windup */
     static constexpr double MAX_AVERAGE_DCM_ERROR = 0.05; // [m]
-    static constexpr double MAX_ALTCC_COM_OFFSET = 0.10; // [m]
+    static constexpr double MAX_ALTCC_COM_OFFSET = 0.05; // [m]
     static constexpr double MAX_ZMPCC_COM_OFFSET = 0.05; // [m]
 
     /** Initialize stabilizer.
