@@ -153,9 +153,9 @@ namespace vhip_walking
     auto & ctl = controller();
     auto & robot = ctl.controlRobot();
 
-    sva::PTransformd X_0_lc = robot.surface("LeftFootCenter").X_0_s(robot);
-    sva::PTransformd X_0_rc = robot.surface("RightFootCenter").X_0_s(robot);
-    sva::PTransformd X_0_mid = sva::interpolate(X_0_lc, X_0_rc, 0.5);
+    sva::PTransformd X_0_lf = robot.surface("LeftFoot").X_0_s(robot);
+    sva::PTransformd X_0_rf = robot.surface("RightFoot").X_0_s(robot);
+    sva::PTransformd X_0_mid = sva::interpolate(X_0_lf, X_0_rf, 0.5);
 
     sva::ForceVecd wrench_0 = ctl.netWrenchObs().wrench();
     sva::ForceVecd wrench_mid = X_0_mid.dualMul(wrench_0);

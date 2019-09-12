@@ -136,6 +136,7 @@ namespace vhip_walking
       logger.addLogEntry("calibrator_internal_residual", [this]() { return y_ - x_.dot(theta_); });
       logger.addLogEntry("calibrator_rate", [this]() { return rate_; });
       logger.addLogEntry("calibrator_theta", [this]() { return theta_; });
+      logger.addLogEntry("calibrator_thetaAvg", [this]() { return thetaAvg(); });
     }
   
     /** Remove log entries.
