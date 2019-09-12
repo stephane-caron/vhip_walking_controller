@@ -27,7 +27,6 @@ namespace vhip_walking
   {
     auto & ctl = controller();
 
-    isCalibrating_ = true;
     isWeighing_ = true;
     postureTaskIsActive_ = true;
     postureTaskWasActive_ = true;
@@ -74,7 +73,7 @@ namespace vhip_walking
       ctl.internalReset();
       postureTaskWasActive_ = false;
     }
-    else if (!isCalibrating_ && !isWeighing_)
+    else if (!isWeighing_)
     {
       showStartStandingButton();
     }

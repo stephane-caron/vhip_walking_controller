@@ -25,7 +25,7 @@
 #include <mc_control/fsm/State.h>
 
 #include <vhip_walking/Controller.h>
-#include <vhip_walking/HRP4PressureCalibrator.h>
+#include <vhip_walking/HRP4ForceCalibrator.h>
 #include <vhip_walking/State.h>
 #include <vhip_walking/utils/stats.h>
 
@@ -82,8 +82,7 @@ namespace vhip_walking
 
     private:
       AvgStdEstimator massEstimator_;
-      HRP4PressureCalibrator calibrator_;
-      bool isCalibrating_;
+      HRP4ForceCalibrator calibrator_;
       bool isWeighing_;
       bool postureTaskIsActive_;
       bool postureTaskWasActive_;

@@ -20,6 +20,7 @@ set(CONTROLLER_SRC
     Controller.cpp
     FloatingBaseObserver.cpp
     FootstepPlan.cpp
+    HRP4ForceCalibrator.cpp
     ModelPredictiveControl.cpp
     NetWrenchObserver.cpp
     Pendulum.cpp
@@ -32,7 +33,7 @@ set(CONTROLLER_HDR
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/FloatingBaseObserver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/FootstepPlan.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/HRP4PressureCalibrator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/HRP4ForceCalibrator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/ModelPredictiveControl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/NetWrenchObserver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/vhip_walking/Pendulum.h
