@@ -26,6 +26,7 @@ set(CONTROLLER_SRC
     Pendulum.cpp
     Stabilizer.cpp
     SwingFoot.cpp
+    gui/Controller.cpp
 )
 
 set(CONTROLLER_HDR
