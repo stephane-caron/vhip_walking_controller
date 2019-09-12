@@ -26,6 +26,7 @@
 #include <vhip_walking/Contact.h>
 #include <vhip_walking/Pendulum.h>
 #include <vhip_walking/defs.h>
+#include <vhip_walking/utils/clamp.h>
 
 namespace vhip_walking
 {
@@ -81,8 +82,16 @@ namespace vhip_walking
     void forceCalib(const Eigen::Vector2d & calib)
     {
       forceCalib_ = calib;
-      clampInPlace(force_Calib.x(), -2., +2., "Force calib KTx");
-      clampInPlace(force_Calib.y(), -2., +2., "Force calib KTy");
+      clampInPlace(forceCalib_.x(), -2., +2., "Force calib KTx");
+      clampInPlace(forceCalib_.y(), -5., +5., "Force calib KTy");
+    }
+
+    /** Raw contact wrench in the world frame before applying calibration data.
+     *
+     */
+    const sva::ForceVecd & rawWrench() const
+    {
+      return rawWrench_;
     }
 
     /** Net contact wrench in the world frame.

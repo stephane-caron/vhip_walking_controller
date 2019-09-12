@@ -77,6 +77,7 @@ namespace vhip_walking
 
   void NetWrenchObserver::addLogEntries(mc_rtc::Logger & logger)
   {
+    logger.addLogEntry("netWrench_forceCalib", [this]() { return forceCalib_; });
     logger.addLogEntry("netWrench_rawWrench", [this]() { return rawWrench_; });
     logger.addLogEntry("netWrench_wrench", [this]() { return netWrench_; });
     logger.addLogEntry("netWrench_zmp", [this]() { return netZMP_; });
