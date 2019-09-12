@@ -25,6 +25,7 @@
 #include <mc_control/fsm/State.h>
 
 #include <vhip_walking/Controller.h>
+#include <vhip_walking/HRP4PressureCalibrator.h>
 #include <vhip_walking/State.h>
 #include <vhip_walking/utils/stats.h>
 
@@ -59,15 +60,20 @@ namespace vhip_walking
        */
       void runState() override;
 
-      /** Add "Start standing" transition button to GUI.
+      /** Calibrate foot force torque sensors.
        *
        */
-      void showStartStandingButton();
+      void calibrateForceTorqueSensors();
 
       /** Remove "Start standing" transition button from GUI.
        *
        */
       void hideStartStandingButton();
+
+      /** Add "Start standing" transition button to GUI.
+       *
+       */
+      void showStartStandingButton();
 
       /** Estimate robot mass from force sensor measurements.
        *
@@ -76,6 +82,8 @@ namespace vhip_walking
 
     private:
       AvgStdEstimator massEstimator_;
+      HRP4PressureCalibrator calibrator_;
+      bool isCalibrating_;
       bool isWeighing_;
       bool postureTaskIsActive_;
       bool postureTaskWasActive_;

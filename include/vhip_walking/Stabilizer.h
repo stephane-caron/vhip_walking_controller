@@ -92,7 +92,7 @@ namespace vhip_walking
      */
     Stabilizer(const mc_rbdyn::Robot & robot, const Pendulum & ref, double dt);
 
-    /** Add GUI panel.
+    /** Add GUI tab.
      *
      * \param gui GUI handle.
      *
@@ -270,6 +270,14 @@ namespace vhip_walking
     Eigen::Vector3d zmp() const
     {
       return computeZMP(distribWrench_);
+    }
+
+    /** Get transform X_0_zmp to the ZMP frame.
+     *
+     */
+    const sva::PTransformd & zmpFrame() const
+    {
+      return zmpFrame_;
     }
 
     /** Vertices of the ZMP support polygon in the world frame.

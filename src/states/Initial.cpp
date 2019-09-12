@@ -27,6 +27,7 @@ namespace vhip_walking
   {
     auto & ctl = controller();
 
+    isCalibrating_ = true;
     isWeighing_ = true;
     postureTaskIsActive_ = true;
     postureTaskWasActive_ = true;
@@ -36,10 +37,12 @@ namespace vhip_walking
     ctl.internalReset();
 
     logger().addLogEntry("walking_phase", []() { return -2.; });
+    calibrator_.addLogEntries(logger());
 
     if (gui())
     {
       gui()->removeElement({"Walking", "Controller"}, "Pause walking");
+      calibrator_.addGUIElements(gui());
     }
 
     runState(); // don't wait till next cycle to update reference and tasks
@@ -48,10 +51,12 @@ namespace vhip_walking
   void states::Initial::teardown()
   {
     logger().removeLogEntry("walking_phase");
+    calibrator_.removeLogEntries(logger());
 
     if (gui())
     {
       hideStartStandingButton();
+      calibrator_.removeGUIElements(gui());
     }
   }
 
@@ -69,10 +74,11 @@ namespace vhip_walking
       ctl.internalReset();
       postureTaskWasActive_ = false;
     }
-    else if (!isWeighing_)
+    else if (!isCalibrating_ && !isWeighing_)
     {
       showStartStandingButton();
     }
+    calibrateForceTorqueSensors();
     weighRobot();
   }
 
@@ -140,6 +146,23 @@ namespace vhip_walking
       isWeighing_ = true;
       hideStartStandingButton();
     }
+  }
+
+  void states::Initial::calibrateForceTorqueSensors()
+  {
+    auto & ctl = controller();
+    auto & robot = ctl.controlRobot();
+
+    sva::PTransformd X_0_lc = robot.surface("LeftFootCenter").X_0_s(robot);
+    sva::PTransformd X_0_rc = robot.surface("RightFootCenter").X_0_s(robot);
+    sva::PTransformd X_0_mid = sva::interpolate(X_0_lc, X_0_rc, 0.5);
+
+    sva::ForceVecd wrench_0 = ctl.netWrenchObs().wrench();
+    sva::ForceVecd wrench_mid = X_0_mid.dualMul(wrench_0);
+    double Fz = wrench_mid.force().z();
+    double Tx = wrench_mid.moment().x();
+    double Ty = wrench_mid.moment().y();
+    calibrator_.update(Fz, Tx, Ty);
   }
 }
 
