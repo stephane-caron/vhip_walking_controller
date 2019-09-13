@@ -570,11 +570,7 @@ namespace vhip_walking
     updateSupportFootGains();
     updateZMPFrame();
 
-    sva::ForceVecd desiredWrench =
-      (model_ == TemplateModel::VariableHeightInvertedPendulum)
-      ? computeVHIPDesiredWrench()
-      : computeLIPDesiredWrench();
-
+    sva::ForceVecd desiredWrench = computeDesiredWrench();
     distributeWrench(desiredWrench);
     updateCoMAdmittanceControl();
     updateFootForceDifferenceControl();
@@ -583,12 +579,22 @@ namespace vhip_walking
     runTime_ = 1000. * duration_cast<duration<double>>(endTime - startTime).count();
   }
 
-  void Stabilizer::updateState(const Eigen::Vector3d & com, const Eigen::Vector3d & comd, const sva::ForceVecd & wrench, double leftFootRatio)
+  sva::ForceVecd Stabilizer::computeDesiredWrench()
   {
-    leftFootRatio_ = leftFootRatio;
-    measuredCoM_ = com;
-    measuredCoMd_ = comd;
-    measuredWrench_ = wrench;
+    sva::ForceVecd desiredWrench;
+    if (model_ == TemplateModel::LinearInvertedPendulum)
+    {
+      desiredWrench = computeLIPDesiredWrench();
+    }
+    else // (model_ == TemplateModel::VariableHeightInvertedPendulum)
+    {
+      using namespace std::chrono;
+      auto startTime = high_resolution_clock::now();
+      desiredWrench = computeVHIPDesiredWrench();
+      auto endTime = high_resolution_clock::now();
+      vhipRunTime_ = 1000. * duration_cast<duration<double>>(endTime - startTime).count();
+    }
+    return desiredWrench;
   }
 
   sva::ForceVecd Stabilizer::computeLIPDesiredWrench()
@@ -609,23 +615,18 @@ namespace vhip_walking
     Eigen::Vector3d desiredCoMAccel = pendulum_.comdd();
     desiredCoMAccel += dcmGain_ * omega2 * dcmError_ + omega * comdError;
     desiredCoMAccel += dcmIntegralGain_ * omega2 * dcmAverageError_;
-    auto desiredForce = mass_ * (desiredCoMAccel - world::gravity);
-
-    // TODO: test both versions on the real robot
+    Eigen::Vector3d desiredForce = mass_ * (desiredCoMAccel - world::gravity);
     return {pendulum_.com().cross(desiredForce), desiredForce};
-    //return {measuredCoM_.cross(desiredForce), desiredForce};
   }
 
   sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
   {
-    using namespace std::chrono;
-    auto startTime = high_resolution_clock::now();
-
     double vrpGain = dcmGain_ + 1.;
     double refOmega = pendulum_.omega();
     double refLambda = refOmega * refOmega;
     Eigen::Vector3d comError = measuredCoM_ - pendulum_.com();
     Eigen::Vector3d comdError = measuredCoMd_ - pendulum_.comd();
+    Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d refDCM = pendulum_.com() + pendulum_.comd() / refOmega;
     Eigen::Vector3d refVRP = pendulum_.zmp() - world::gravity / refLambda;
     const Eigen::Vector3d & refZMP = pendulum_.zmp();
@@ -758,17 +759,7 @@ namespace vhip_walking
     vhipLambda_ = refLambda + Delta_lambda;
     vhipDCM_ = measuredCoM_ + measuredCoMd_ / vhipOmega_;
     vhipZMP_ = refZMP + R_Delta_zmp * Delta_zmp;
-
-    Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d desiredForce = mass_ * vhipLambda_ * (refCoM - vhipZMP_);
-
-    Eigen::Vector3d checkForce = mass_ * (pendulum_.comdd() + Delta_lambda * (refCoM - refZMP) + refLambda * (comError - R_Delta_zmp * Delta_zmp) - world::gravity);
-    LOG_INFO("desiredForce = " << desiredForce.transpose());
-    LOG_INFO("checkForce = " << checkForce.transpose());
-    LOG_INFO("norm diff = " << (desiredForce - checkForce).norm() / desiredForce.norm());
-
-    auto endTime = high_resolution_clock::now();
-    vhipRunTime_ = 1000. * duration_cast<duration<double>>(endTime - startTime).count();
     return {vhipZMP_.cross(desiredForce), desiredForce};
   }
 

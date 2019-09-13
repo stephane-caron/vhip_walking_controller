@@ -229,7 +229,13 @@ namespace vhip_walking
      * \param leftFootRatio Desired pressure distribution ratio for left foot.
      *
      */
-    void updateState(const Eigen::Vector3d & com, const Eigen::Vector3d & comd, const sva::ForceVecd & wrench, double leftFootRatio);
+    void updateState(const Eigen::Vector3d & com, const Eigen::Vector3d & comd, const sva::ForceVecd & wrench, double leftFootRatio)
+    {
+      leftFootRatio_ = leftFootRatio;
+      measuredCoM_ = com;
+      measuredCoMd_ = comd;
+      measuredWrench_ = wrench;
+    }
 
     /** Update H-representation of contact wrench cones.
      *
@@ -324,6 +330,11 @@ namespace vhip_walking
      *
      */
     void checkInTheAir();
+
+    /** Compute desired wrench to compensate DCM error.
+     *
+     */
+    sva::ForceVecd computeDesiredWrench();
 
     /** Compute desired wrench using the LIP template model.
      *
