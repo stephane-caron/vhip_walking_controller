@@ -36,7 +36,8 @@ namespace vhip_walking
   void NetWrenchObserver::update(const mc_rbdyn::Robot & realRobot, const Contact & contact)
   {
     updateNetWrench(realRobot);
-    updateNetZMP(contact);
+    rawZMP_ = computeZMP(rawWrench_, contact);
+    netZMP_ = computeZMP(netWrench_, contact);
   }
 
   void NetWrenchObserver::updateNetWrench(const mc_rbdyn::Robot & realRobot)
@@ -64,21 +65,23 @@ namespace vhip_walking
   /* TODO: update w.r.t. anchorFrame
    *
    */
-  void NetWrenchObserver::updateNetZMP(const Contact & contact)
+  Eigen::Vector3d NetWrenchObserver::computeZMP(const sva::ForceVecd & wrench, const Contact & contact)
   {
-    const Eigen::Vector3d & force = netWrench_.force();
-    const Eigen::Vector3d & moment_0 = netWrench_.couple();
+    const Eigen::Vector3d & force = wrench.force();
+    const Eigen::Vector3d & moment_0 = wrench.couple();
     Eigen::Vector3d moment_p = moment_0 - contact.p().cross(force);
     if (force.dot(force) > 42.) // force norm is more than 5 [N]
     {
-      netZMP_ = contact.p() + contact.n().cross(moment_p) / contact.n().dot(force);
+      return contact.p() + contact.n().cross(moment_p) / contact.n().dot(force);
     }
+    return Eigen::Vector3d::Zero();
   }
 
   void NetWrenchObserver::addLogEntries(mc_rtc::Logger & logger)
   {
     logger.addLogEntry("netWrench_forceCalib", [this]() { return forceCalib_; });
     logger.addLogEntry("netWrench_rawWrench", [this]() { return rawWrench_; });
+    logger.addLogEntry("netWrench_rawZMP", [this]() { return rawZMP_; });
     logger.addLogEntry("netWrench_wrench", [this]() { return netWrench_; });
     logger.addLogEntry("netWrench_zmp", [this]() { return netZMP_; });
   }
