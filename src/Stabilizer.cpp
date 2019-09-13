@@ -610,7 +610,10 @@ namespace vhip_walking
     desiredCoMAccel += dcmGain_ * omega2 * dcmError_ + omega * comdError;
     desiredCoMAccel += dcmIntegralGain_ * omega2 * dcmAverageError_;
     auto desiredForce = mass_ * (desiredCoMAccel - world::gravity);
+
+    // TODO: test both versions on the real robot
     return {pendulum_.com().cross(desiredForce), desiredForce};
+    //return {measuredCoM_.cross(desiredForce), desiredForce};
   }
 
   sva::ForceVecd Stabilizer::computeVHIPDesiredWrench()
@@ -758,6 +761,11 @@ namespace vhip_walking
 
     Eigen::Vector3d refCoM = pendulum_.com();
     Eigen::Vector3d desiredForce = mass_ * vhipLambda_ * (refCoM - vhipZMP_);
+
+    Eigen::Vector3d checkForce = mass_ * (pendulum_.comdd() + Delta_lambda * (refCoM - refZMP) + refLambda * (comError - R_Delta_zmp * Delta_zmp) - world::gravity);
+    LOG_INFO("desiredForce = " << desiredForce.transpose());
+    LOG_INFO("checkForce = " << checkForce.transpose());
+    LOG_INFO("norm diff = " << (desiredForce - checkForce).norm() / desiredForce.norm());
 
     auto endTime = high_resolution_clock::now();
     vhipRunTime_ = 1000. * duration_cast<duration<double>>(endTime - startTime).count();
