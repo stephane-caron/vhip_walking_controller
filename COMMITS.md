@@ -10,5 +10,4 @@ This file lists dependency commits of a consistent build of the project:
 * [copra](https://github.com/vsamy/copra): ``baa07aa79217bd4aeaeff04fe5c7596b782e9c30``
 * [mc\_rtc\_ros\_data](https://gite.lirmm.fr/multi-contact/mc_rtc_ros_data): ``cc065c64927c500cd45e358bb97a28fda6bae52d``
 * [mc\_rtc\_ros](https://gite.lirmm.fr/multi-contact/mc_rtc_ros): ``881c26de335c76a4c082cd6648662a39180a59b4``
-* [mc\_rtc](https://gite.lirmm.fr/multi-contact/mc_rtc): ``5a85f58f1558f5894aba2bf1b7522cf4370ebf7f``
-* [tvm](https://github.com/jrl-umi3218/tvm): ``a74f84dac6aa8b17f3f235f3ca24bcf1c1abbc7ea``
+* [mc\_rtc](https://gite.lirmm.fr/multi-contact/mc_rtc): ``1e9eabc6c839996ffc3ca3cbcb22cacd218b395c``
