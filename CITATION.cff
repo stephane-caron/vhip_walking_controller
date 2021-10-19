@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you found this code helpful, please cite it as below."
+authors:
+- family-names: "Caron"
+  given-names: "Stéphane"
+  orcid: "https://orcid.org/0000-0003-2906-692X"
+title: "VHIP Walking Controller"
+version: 0.8
+doi: 10.1109/ICRA40945.2020.9196715
+date-released: 2018-09-17
+url: "https://github.com/stephane-caron/vhip_walking_controller"
+license: "BSD-2-Clause"
+preferred-citation:
+  type: conference-paper
+  title: "Biped Stabilization by Linear Feedback of the Variable-Height Inverted Pendulum Model"
+  authors:
+  - family-names: "Caron"
+    given-names: "Stéphane"
+    orcid: "https://orcid.org/0000-0003-2906-692X"
+  conference:
+    name: IEEE International Conference on Robotics and Automation
+    location: Paris, Île-de-France, France
+    city: Paris
+    region: Île-de-France
+    country: France
+    date-start: 2020-05-31
+    date-end: 2020-09-15
+  doi: "10.1109/ICRA40945.2020.9196715"
+  month: 5
+  start: 9782 # First page number
+  end: 9788 # Last page number
+  year: 2020
