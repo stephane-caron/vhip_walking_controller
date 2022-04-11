@@ -1,10 +1,10 @@
 # VHIP Walking Controller
 
-Source code of the controller used in the experiments of [Biped Stabilization by Linear Feedback of the Variable-Height Inverted Pendulum Model](https://hal.archives-ouvertes.fr/hal-02289919/document).
+Source code of the controller used in the experiments of [Biped Stabilization by Linear Feedback of the Variable-Height Inverted Pendulum Model](https://arxiv.org/abs/1909.07732) ([pdf](https://arxiv.org/pdf/1909.07732)).
 
 ## Ressources
 
-See the documentation of the [LIPM walking](https://github.com/stephane-caron/lipm_walking_controller) controller:
+See the documentation of the [LIPM walking controller](https://github.com/stephane-caron/lipm_walking_controller):
 
 - [Installation](https://github.com/stephane-caron/lipm_walking_controller#installation)
 - [Usage](https://github.com/stephane-caron/lipm_walking_controller#usage)
