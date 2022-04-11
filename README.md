@@ -9,3 +9,5 @@ See the documentation of the [LIPM walking controller](https://github.com/stepha
 - [Installation](https://github.com/stephane-caron/lipm_walking_controller#installation)
 - [Usage](https://github.com/stephane-caron/lipm_walking_controller#usage)
 - [Wiki](https://github.com/stephane-caron/lipm_walking_controller/wiki)
+
+See also [COMMITS.md](COMMITS.md) for a list of dependency commits that yield a working build of the project.
